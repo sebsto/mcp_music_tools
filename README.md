@@ -270,17 +270,6 @@ public let defaultSecret = Secret(
 
 For more information, see [Apple's documentation on generating developer tokens](https://developer.apple.com/documentation/applemusicapi/generating-developer-tokens).
 
-## Finding Apple Music IDs
-
-You can find Apple Music song, album, and playlist IDs in several ways:
-
-1. **Using iTunes/Music App**: Right-click on a song, album, or playlist and select "Share" -> "Copy Link". The ID is in the URL:
-   - Song: `https://itunes.apple.com/{country}/album/{songName}/{albumID}?i={songID}`
-   - Album: `https://itunes.apple.com/{country}/album/{albumName}/{albumID}`
-   - Playlist: `https://music.apple.com/{country}/playlist/{playlistName}/{playlistID}`
-
-2. **Using iTunes Search API**: You can search for content using the iTunes Search API and extract the IDs from the results.
-
 ## Setting Up Sonos Control
 
 1. Install and run the [node-sonos-http-api](https://github.com/jishi/node-sonos-http-api):
