@@ -23,19 +23,19 @@ public struct Secret: Codable, Sendable {
   }
 }
 
-// TODO: add your secret here
 // Default secret for development purposes
 // Note: Replace with your own credentials for production use
 // https://developer.apple.com/help/account/capabilities/create-a-media-identifier-and-private-key/
 // The rest of the code generates token as described here
 // https://developer.apple.com/documentation/applemusicapi/generating-developer-tokens
 
+// Uncomment and replace with your own credentials
 // public let defaultSecret = Secret(
 //   privateKey: """
 //     -----BEGIN PRIVATE KEY-----
-//     M....Wl
+//     YOUR_PRIVATE_KEY_CONTENT_HERE
 //     -----END PRIVATE KEY-----
 //     """,
-//   teamId: "1234567890",
-//   keyId: "1234567890"
+//   teamId: "YOUR_TEAM_ID",
+//   keyId: "YOUR_KEY_ID"
 // )

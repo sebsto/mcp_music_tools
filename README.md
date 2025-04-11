@@ -1,15 +1,15 @@
-# AppleMusicKit & SonosKit
+# Music Agent
 
-This project contains two Swift 6 libraries:
-1. **AppleMusicKit**: A library for interacting with the Apple Music API, with a focus on search functionality.
-2. **SonosKit**: A library for controlling Sonos speakers through the node-sonos-http-api.
+A Swift 6 project containing three libraries for controlling your music ecosystem:
+
+1. **AppleMusicKit**: A library for interacting with the Apple Music API
+2. **SonosKit**: A library for controlling Sonos speakers through the node-sonos-http-api
+3. **AmplifierKit**: A library for controlling Denon/Marantz amplifiers
 
 ## Features
 
 ### AppleMusicKit
-- Search the Apple Music catalog by artist name
-- Search the Apple Music catalog by song title
-- Search by both artist and title
+- Search the Apple Music catalog by artist name, song title, or both
 - Get detailed information about specific songs
 - Generate Apple Music API developer tokens using ES256 algorithm
 - Command-line interface for testing the library
@@ -23,17 +23,21 @@ This project contains two Swift 6 libraries:
 - Play Apple Music songs, albums, and playlists
 - Command-line interface for testing the library
 
+### AmplifierKit
+- Power on/off your amplifier
+- Switch between input sources
+- Get available source names
+- Get amplifier status
+- SSL certificate bypass for local network devices
+- Command-line interface for testing the library
+
 ## Requirements
 
-### AppleMusicKit
 - Swift 6.0+
 - macOS 14.0+ or iOS 17.0+
-- Apple Music API developer token
-
-### SonosKit
-- Swift 6.0+
-- macOS 14.0+
-- [node-sonos-http-api](https://github.com/jishi/node-sonos-http-api) running locally or on a network
+- For AppleMusicKit: Apple Music API developer token
+- For SonosKit: [node-sonos-http-api](https://github.com/jishi/node-sonos-http-api) running locally or on a network
+- For AmplifierKit: Denon/Marantz amplifier on your local network
 
 ## Installation
 
@@ -43,7 +47,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/AppleMusicKit.git", from: "1.0.0")
+    .package(url: "https://github.com/yourusername/music_agent.git", from: "1.0.0")
 ]
 ```
 
@@ -119,6 +123,32 @@ for room in rooms {
 }
 ```
 
+### AmplifierKit Library Usage
+
+```swift
+import AmplifierKit
+
+// Initialize with default host and port
+let config = AmplifierConfig(host: "192.168.1.37", port: 10443)
+let controller = HTTPAmplifierController(config: config)
+
+// Power control
+try await controller.powerOn()
+try await controller.powerOff()
+
+// Source control
+try await controller.switchToSource(index: 4)  // Switch to source with index 4
+try await controller.switchToSonos()           // Shortcut to switch to Sonos
+try await controller.switchToAppleTV()         // Shortcut to switch to Apple TV
+
+// Get information
+let sources = try await controller.getSourceNames()
+let status = try await controller.getMainZoneStatus()
+print("Zone: \(status.name), Power: \(status.isPowered ? "On" : "Off")")
+```
+
+## Command-Line Interfaces
+
 ### AppleMusicCLI Usage
 
 ```bash
@@ -136,9 +166,6 @@ swift run AppleMusicCLI song "1234567890"
 
 # Generate a token using the built-in ES256 implementation (default)
 swift run AppleMusicCLI token
-
-# Generate a token using a script
-swift run AppleMusicCLI token -p "/path/to/generate_jwt.js"
 
 # Generate a token with custom credentials
 swift run AppleMusicCLI token --team-id "YOUR_TEAM_ID" --key-id "YOUR_KEY_ID" --key-path "/path/to/private_key.p8"
@@ -165,36 +192,83 @@ swift run SonosCLI play --room "Living Room"
 # Pause music
 swift run SonosCLI pause --room "Living Room"
 
-# Stop music
-swift run SonosCLI stop --room "Living Room"
-
-# Skip to next track
-swift run SonosCLI next --room "Living Room"
-
-# Skip to previous track
-swift run SonosCLI previous --room "Living Room"
-
 # Set volume
 swift run SonosCLI volume 50 --room "Living Room"
-
-# Add a track to the queue
-swift run SonosCLI queue add "spotify:track:5hTpBe8h35rJ67eAWHQsJx" --room "Living Room"
-
-# Clear the queue
-swift run SonosCLI queue clear --room "Living Room"
 
 # Play Apple Music song now
 swift run SonosCLI applemusic song "355364259" --mode now --room "Living Room"
 
-# Add Apple Music album to queue
-swift run SonosCLI applemusic album "355363490" --room "Living Room"
-
-# Add Apple Music playlist to be played next
-swift run SonosCLI applemusic playlist "pl.ed52c9eeaa0740079c21fa8e455b225e" --mode next --room "Living Room"
-
 # List available rooms
 swift run SonosCLI rooms
 ```
+
+### AmplifierCLI Usage
+
+```bash
+# Power on the amplifier
+swift run AmplifierCLI power-on
+
+# Power off the amplifier
+swift run AmplifierCLI power-off
+
+# Switch to Sonos input
+swift run AmplifierCLI sonos
+
+# Switch to Apple TV input
+swift run AmplifierCLI appletv
+
+# Switch to a specific source by index
+swift run AmplifierCLI source 3
+
+# List all available sources with their indices
+swift run AmplifierCLI sources
+
+# Get amplifier status
+swift run AmplifierCLI status
+```
+
+## Setting Up Apple Music API Access
+
+To use the Apple Music API, you need to obtain developer credentials:
+
+1. **Enroll in the Apple Developer Program**: If you haven't already, enroll at [developer.apple.com](https://developer.apple.com/).
+
+2. **Create a MusicKit identifier**:
+   - Go to [Apple Developer Account](https://developer.apple.com/account/)
+   - Navigate to "Certificates, Identifiers & Profiles"
+   - Select "Identifiers" and click the "+" button
+   - Choose "Media IDs" and follow the instructions to register a MusicKit identifier
+
+3. **Generate a private key**:
+   - In your Apple Developer Account, go to "Keys"
+   - Click the "+" button to add a new key
+   - Give it a name and select "MusicKit" checkbox
+   - Click "Continue" and then "Register"
+   - **IMPORTANT**: Download the private key file (.p8) when prompted. Apple only provides this file ONCE.
+
+4. **Note your credentials**:
+   - **Team ID**: Found in the top-right corner of your Apple Developer Account page
+   - **Key ID**: The identifier for the key you just created
+   - **Private Key**: The contents of the .p8 file you downloaded
+
+5. **Update the Secret.swift file**:
+   - Open `Sources/AppleMusicKit/Secret.swift`
+   - Uncomment the `defaultSecret` section
+   - Replace the placeholder values with your actual credentials:
+
+```swift
+public let defaultSecret = Secret(
+  privateKey: """
+    -----BEGIN PRIVATE KEY-----
+    YOUR_PRIVATE_KEY_CONTENT_HERE
+    -----END PRIVATE KEY-----
+    """,
+  teamId: "YOUR_TEAM_ID",
+  keyId: "YOUR_KEY_ID"
+)
+```
+
+For more information, see [Apple's documentation on generating developer tokens](https://developer.apple.com/documentation/applemusicapi/generating-developer-tokens).
 
 ## Finding Apple Music IDs
 
@@ -207,16 +281,36 @@ You can find Apple Music song, album, and playlist IDs in several ways:
 
 2. **Using iTunes Search API**: You can search for content using the iTunes Search API and extract the IDs from the results.
 
-## Token Generation
+## Setting Up Sonos Control
 
-The AppleMusicKit library supports multiple ways to generate Apple Music API developer tokens:
+1. Install and run the [node-sonos-http-api](https://github.com/jishi/node-sonos-http-api):
+   ```bash
+   git clone https://github.com/jishi/node-sonos-http-api.git
+   cd node-sonos-http-api
+   npm install
+   npm start
+   ```
 
-1. Using an existing token
-2. Using the built-in ES256 implementation with JWTKit (recommended)
-3. Using external scripts (for special cases):
-   - Bash scripts (like the provided `generate_jws.sh`)
-   - Node.js scripts (like the provided `generate_jwt.js`)
+2. The API will automatically discover your Sonos speakers on the network.
+
+3. Update the SonosClient configuration with the host and port where the API is running:
+   ```swift
+   let client = SonosClient(host: "192.168.1.100", port: 5005)
+   ```
+
+## Setting Up Amplifier Control
+
+1. Ensure your Denon/Marantz amplifier is connected to your local network.
+
+2. Find the IP address of your amplifier (check your router's DHCP client list or the amplifier's network settings).
+
+3. Update the AmplifierConfig with the correct IP address:
+   ```swift
+   let config = AmplifierConfig(host: "192.168.1.37", port: 10443)
+   ```
+
+4. The AmplifierKit includes SSL certificate bypass functionality for dealing with self-signed certificates commonly used by these devices.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
