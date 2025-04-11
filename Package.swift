@@ -15,6 +15,10 @@ let package = Package(
             name: "SonosKit",
             targets: ["SonosKit"]
         ),
+        .library(
+            name: "AmplifierKit",
+            targets: ["AmplifierKit"]
+        ),
         .executable(
             name: "AppleMusicCLI",
             targets: ["AppleMusicCLI"]
@@ -22,6 +26,10 @@ let package = Package(
         .executable(
             name: "SonosCLI",
             targets: ["SonosCLI"]
+        ),
+        .executable(
+            name: "AmplifierCLI",
+            targets: ["AmplifierCLI"]
         ),
         .executable(
             name: "AppleMusicTool",
@@ -46,6 +54,11 @@ let package = Package(
         ),
         .target(
             name: "SonosKit",
+            dependencies: []
+        ),
+        .target(
+            name: "AmplifierKit",
+            dependencies: []
         ),
         .executableTarget(
             name: "AppleMusicCLI",
@@ -58,6 +71,13 @@ let package = Package(
             name: "SonosCLI",
             dependencies: [
                 "SonosKit",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
+        ),
+        .executableTarget(
+            name: "AmplifierCLI",
+            dependencies: [
+                "AmplifierKit",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
@@ -82,6 +102,10 @@ let package = Package(
         .testTarget(
             name: "SonosKitTests",
             dependencies: ["SonosKit"]
+        ),
+        .testTarget(
+            name: "AmplifierKitTests",
+            dependencies: ["AmplifierKit"]
         ),
     ]
 )
