@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"arguments": {"id": "1440830867", "storefront" : "fr"},"name": "getSongDetails"}}

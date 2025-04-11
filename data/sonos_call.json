@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"playAppleMusic","arguments":{"contentType":"song","contentId":"1440830867","mode":"now","room":"Living Room"}}}

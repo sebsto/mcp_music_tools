@@ -1,0 +1,2 @@
+based on the code I have already in /Users/sst/Documents/code/maxi80/maxi-80-backend-swift and /Users/sst/Documents/code/maxi80/apple\ music\ api  write a swift6 client for the apple music search api. I want to be able to search by artist and title. The client is a library. Also write a command line tool to test the library.
+
