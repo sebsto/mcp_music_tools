@@ -39,6 +39,10 @@ let package = Package(
             name: "SonosTool",
             targets: ["SonosTool"]
         ),
+        .executable(
+            name: "AmplifierTool",
+            targets: ["AmplifierTool"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
@@ -92,6 +96,13 @@ let package = Package(
             name: "SonosTool",
             dependencies: [
                 "SonosKit",
+                .product(name: "MCPServerKit", package: "mcpserverkit"),
+            ]
+        ),
+        .executableTarget(
+            name: "AmplifierTool",
+            dependencies: [
+                "AmplifierKit",
                 .product(name: "MCPServerKit", package: "mcpserverkit"),
             ]
         ),
