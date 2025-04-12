@@ -124,6 +124,16 @@ public class SonosClient {
     return try decoder.decode([SonosQueueItem].self, from: data)
   }
 
+  /// Play an Apple Music playlist
+  /// - Parameters:
+  ///   - playlistId: The Apple Music playlist ID
+  ///   - mode: Playback mode (now, next, queue)
+  ///   - room: Optional room name (uses default room if nil)
+  /// - Returns: Response from the Sonos API
+  public func playAppleMusicPlaylist(playlistId: String, mode: PlaybackMode = .now, room: String? = nil) async throws {
+    try await playAppleMusic(contentType: .playlist, contentId: playlistId, mode: mode, room: room)
+  }
+  
   /// Plays, queues, or adds to queue an Apple Music track, album, or playlist in the specified room or the default room.
   /// - Parameters:
   ///   - contentType: The type of Apple Music content (song, album, or playlist).

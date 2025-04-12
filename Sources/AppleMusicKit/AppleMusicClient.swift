@@ -25,7 +25,9 @@ public class AppleMusicClient {
   ///   - developerToken: The JWT developer token for Apple Music API
   ///   - storefront: The storefront to use (e.g., "us", "fr")
   ///   - session: URLSessionProtocol to use for network requests (defaults to shared session)
-  public init(developerToken: String, storefront: String, session: URLSessionProtocol = URLSession.shared) {
+  public init(
+    developerToken: String, storefront: String, session: URLSessionProtocol = URLSession.shared
+  ) {
     self.developerToken = developerToken
     self.storefront = storefront
     self.session = session
@@ -115,15 +117,66 @@ public class AppleMusicClient {
     return song
   }
 
+  /// Get the user's library playlists
+  /// - Parameters:
+  ///   - limit: Maximum number of results to return (default: 25)
+  ///   - offset: Offset for pagination (default: 0)
+  ///   - userToken: User token for authentication (required for user library access)
+  /// - Returns: User playlists response
+  public func getUserPlaylists(limit: Int = 25, offset: Int = 0, userToken: String) async throws
+    -> UserPlaylistsResponse
+  {
+    let endpoint = "/me/library/playlists?limit=\(limit)&offset=\(offset)"
+    return try await performRequest(endpoint: endpoint, userToken: userToken)
+  }
+
+  /// Get details for a specific user playlist by ID
+  /// - Parameters:
+  ///   - id: The playlist ID
+  ///   - userToken: User token for authentication (required for user library access)
+  /// - Returns: Playlist details
+  public func getUserPlaylistDetails(id: String, userToken: String) async throws -> Playlist {
+    let endpoint = "/me/library/playlists/\(id)"
+    let response: PlaylistResponse = try await performRequest(
+      endpoint: endpoint, userToken: userToken)
+
+    guard let playlist = response.data.first else {
+      throw AppleMusicError.noDataReturned
+    }
+
+    return playlist
+  }
+
+  /// Search for user playlists by name
+  /// - Parameters:
+  ///   - name: The name to search for
+  ///   - limit: Maximum number of results to return (default: 25)
+  ///   - userToken: User token for authentication (required for user library access)
+  /// - Returns: User playlists response
+  public func searchUserPlaylists(name: String, limit: Int = 25, userToken: String) async throws
+    -> UserPlaylistsResponse
+  {
+    let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+    let endpoint = "/me/library/playlists?limit=\(limit)&term=\(encodedName)"
+    return try await performRequest(endpoint: endpoint, userToken: userToken)
+  }
+
   // MARK: - Private Methods
 
-  private func performRequest<T: Decodable>(endpoint: String) async throws -> T {
+  private func performRequest<T: Decodable>(endpoint: String, userToken: String? = nil) async throws
+    -> T
+  {
     guard let url = URL(string: baseURL + endpoint) else {
       throw AppleMusicError.invalidURL
     }
 
     var request = URLRequest(url: url)
     request.setValue("Bearer \(developerToken)", forHTTPHeaderField: "Authorization")
+
+    // Add user token if provided (required for user library access)
+    if let userToken = userToken {
+      request.setValue(userToken, forHTTPHeaderField: "Music-User-Token")
+    }
 
     let (data, response) = try await session.data(for: request)
 

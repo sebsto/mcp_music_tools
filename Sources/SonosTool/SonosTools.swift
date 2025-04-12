@@ -677,6 +677,94 @@ let getStateTool = MCPTool<RoomInput, String>(
     }
 )
 
+// Play Apple Music Playlist Tool
+struct PlayAppleMusicPlaylistInput: Codable {
+    let playlistId: String
+    let mode: String?
+    let room: String?
+    let host: String?
+    let port: Int?
+}
+
+let playAppleMusicPlaylistToolSchema = """
+    {
+        "type": "object",
+        "properties": {
+            "playlistId": {
+                "description": "Apple Music playlist ID",
+                "type": "string"
+            },
+            "mode": {
+                "description": "Playback mode (now, next, or queue)",
+                "type": "string",
+                "enum": ["now", "next", "queue"]
+            },
+            "room": {
+                "description": "The Sonos room/zone name (optional if default room is set)",
+                "type": "string"
+            },
+            "host": {
+                "description": "Optional host address for the Sonos HTTP API (default: localhost)",
+                "type": "string"
+            },
+            "port": {
+                "description": "Optional port for the Sonos HTTP API (default: 5005)",
+                "type": "integer"
+            }
+        },
+        "required": ["playlistId"]
+    }
+    """
+
+let playAppleMusicPlaylistTool = MCPTool<PlayAppleMusicPlaylistInput, String>(
+    name: "playAppleMusicPlaylist",
+    description: "Play an Apple Music playlist on a Sonos speaker",
+    inputSchema: playAppleMusicPlaylistToolSchema,
+    converter: { params in
+        let playlistId = try MCPTool<String, String>.extractParameter(params, name: "playlistId")
+        let mode = try? MCPTool<String, String>.extractParameter(params, name: "mode")
+        let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
+        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
+        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+
+        return PlayAppleMusicPlaylistInput(
+            playlistId: playlistId,
+            mode: mode,
+            room: room,
+            host: host,
+            port: port
+        )
+    },
+    body: { input async throws -> String in
+        let client = SonosClient(
+            host: input.host ?? "localhost",
+            port: input.port ?? 5005,
+            defaultRoom: input.room
+        )
+
+        let mode: PlaybackMode
+        switch input.mode?.lowercased() {
+        case "now", nil:
+            mode = .now
+        case "next":
+            mode = .next
+        case "queue":
+            mode = .queue
+        default:
+            throw MCPServerError.invalidParam("mode", "Must be one of: now, next, queue")
+        }
+
+        try await client.playAppleMusicPlaylist(
+            playlistId: input.playlistId,
+            mode: mode,
+            room: input.room
+        )
+
+        return
+            "Playing Apple Music playlist with ID \(input.playlistId) in room: \(input.room ?? "default room")"
+    }
+)
+
 // Get Rooms Tool
 struct GetRoomsInput: Codable {
     let host: String?

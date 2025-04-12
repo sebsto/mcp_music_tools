@@ -285,8 +285,8 @@ struct SonosCLI: AsyncParsableCommand {
         }
 
         let client = options.createClient()
-        try await client.playAppleMusic(
-          contentType: .playlist, contentId: playlistId, mode: playbackMode, room: options.room)
+        try await client.playAppleMusicPlaylist(
+          playlistId: playlistId, mode: playbackMode, room: options.room)
         print(
           "Apple Music playlist \(playlistId) \(playbackMode.rawValue == "now" ? "playing" : "added to \(playbackMode.rawValue)") in room: \(options.room ?? "default")"
         )
