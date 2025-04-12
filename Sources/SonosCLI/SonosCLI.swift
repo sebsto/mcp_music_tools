@@ -19,6 +19,7 @@ struct SonosCLI: AsyncParsableCommand {
       StorefrontPlaylist.self,
       State.self,
       Rooms.self,
+      Shuffle.self,
     ],
     defaultSubcommand: State.self
   )
@@ -338,6 +339,32 @@ struct SonosCLI: AsyncParsableCommand {
       print("Available rooms:")
       for (index, room) in rooms.enumerated() {
         print("\(index + 1). \(room)")
+      }
+    }
+  }
+  
+  struct Shuffle: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+      abstract: "Enable or disable shuffle mode"
+    )
+
+    @OptionGroup var options: Options
+    
+    @Argument(help: "Enable or disable shuffle mode (on/off)")
+    var state: String
+    
+    func run() async throws {
+      let client = options.createClient()
+      
+      switch state.lowercased() {
+      case "on", "true", "1", "yes":
+        try await client.setShuffle(enabled: true, room: options.room)
+        print("Shuffle mode enabled in room: \(options.room ?? "default")")
+      case "off", "false", "0", "no":
+        try await client.setShuffle(enabled: false, room: options.room)
+        print("Shuffle mode disabled in room: \(options.room ?? "default")")
+      default:
+        throw ValidationError("Invalid shuffle state. Use 'on' or 'off'.")
       }
     }
   }

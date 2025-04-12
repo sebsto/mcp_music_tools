@@ -202,6 +202,17 @@ public class SonosClient {
       zone.members.map { $0.roomName }
     }
   }
+  
+  /// Enables or disables shuffle mode in the specified room or the default room.
+  /// - Parameters:
+  ///   - enabled: Whether to enable or disable shuffle mode.
+  ///   - room: The room to set shuffle mode in. If nil, the default room is used.
+  /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
+  ///           `SonosError.requestFailed` if the request fails.
+  public func setShuffle(enabled: Bool, room: String? = nil) async throws {
+    let shuffleState = enabled ? "on" : "off"
+    try await performAction("shuffle/\(shuffleState)", room: room)
+  }
 
   // MARK: - Private Methods
 

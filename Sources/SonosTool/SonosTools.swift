@@ -815,3 +815,66 @@ let getRoomsTool = MCPTool<GetRoomsInput, String>(
         return String(decoding: data, as: UTF8.self)
     }
 )
+
+// Set Shuffle Tool
+struct SetShuffleInput: Codable {
+    let enabled: Bool
+    let room: String?
+    let host: String?
+    let port: Int?
+}
+
+let setShuffleToolSchema = """
+    {
+        "type": "object",
+        "properties": {
+            "enabled": {
+                "description": "Whether to enable or disable shuffle mode",
+                "type": "boolean"
+            },
+            "room": {
+                "description": "The Sonos room/zone name (optional if default room is set)",
+                "type": "string"
+            },
+            "host": {
+                "description": "Optional host address for the Sonos HTTP API (default: localhost)",
+                "type": "string"
+            },
+            "port": {
+                "description": "Optional port for the Sonos HTTP API (default: 5005)",
+                "type": "integer"
+            }
+        },
+        "required": ["enabled"]
+    }
+    """
+
+let setShuffleTool = MCPTool<SetShuffleInput, String>(
+    name: "setShuffle",
+    description: "Enable or disable shuffle mode on a Sonos speaker",
+    inputSchema: setShuffleToolSchema,
+    converter: { params in
+        let enabled = try MCPTool<Bool, Bool>.extractParameter(params, name: "enabled")
+        let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
+        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
+        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+
+        return SetShuffleInput(
+            enabled: enabled,
+            room: room,
+            host: host,
+            port: port
+        )
+    },
+    body: { input async throws -> String in
+        let client = SonosClient(
+            host: input.host ?? "localhost",
+            port: input.port ?? 5005,
+            defaultRoom: input.room
+        )
+
+        try await client.setShuffle(enabled: input.enabled, room: input.room)
+        let status = input.enabled ? "enabled" : "disabled"
+        return "Shuffle mode \(status) in room: \(input.room ?? "default room")"
+    }
+)

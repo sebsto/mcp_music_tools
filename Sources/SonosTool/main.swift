@@ -26,6 +26,7 @@ let server = MCPServer(
     playStorefrontPlaylistTool,
     getStateTool,
     getRoomsTool,
+    setShuffleTool,
   ]
 )
 // start the server
