@@ -55,11 +55,23 @@ struct AmplifierControllerTests {
     @Test("Getting main zone status should work correctly")
     func testGetMainZoneStatus() async throws {
         let controller = MockAmplifierController()
-
-        let status = try await controller.getMainZoneStatus()
+        
+        // Test with default state
+        var status = try await controller.getMainZoneStatus()
         #expect(status.name == "Main Zone")
         #expect(!status.isPowered)
+        #expect(status.sourceName == "AppleTV")
         #expect(controller.getMainZoneStatusCallCount == 1)
+        
+        // Test after power on and source change
+        try await controller.powerOn()
+        try await controller.switchToSonos()
+        
+        status = try await controller.getMainZoneStatus()
+        #expect(status.name == "Main Zone")
+        #expect(status.isPowered)
+        #expect(status.sourceName == "Sonos")
+        #expect(controller.getMainZoneStatusCallCount == 2)
     }
 
     @Test("AmplifierConfig should initialize correctly")

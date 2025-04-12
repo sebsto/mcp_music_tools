@@ -142,6 +142,9 @@ struct AmplifierCLI: AsyncParsableCommand {
             let status = try await controller.getMainZoneStatus()
             print("Zone: \(status.name)")
             print("Power: \(status.isPowered ? "On" : "Off")")
+            if let sourceName = status.sourceName {
+                print("Current Source: \(sourceName)")
+            }
         }
     }
 }

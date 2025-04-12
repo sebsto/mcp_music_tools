@@ -7,7 +7,7 @@ public protocol AmplifierController {
     func switchToAppleTV() async throws
     func switchToSource(index: Int) async throws
     func getSourceNames() async throws -> [String]
-    func getMainZoneStatus() async throws -> (name: String, isPowered: Bool)
+    func getMainZoneStatus() async throws -> (name: String, isPowered: Bool, sourceName: String?)
 }
 
 public enum AmplifierError: Error {

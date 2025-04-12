@@ -52,9 +52,9 @@ public class MockAmplifierController: AmplifierController {
         return availableSources
     }
 
-    public func getMainZoneStatus() async throws -> (name: String, isPowered: Bool) {
+    public func getMainZoneStatus() async throws -> (name: String, isPowered: Bool, sourceName: String?) {
         getMainZoneStatusCallCount += 1
-        return (name: zoneName, isPowered: isPowered)
+        return (name: zoneName, isPowered: isPowered, sourceName: currentSource)
     }
 
     public func reset() {

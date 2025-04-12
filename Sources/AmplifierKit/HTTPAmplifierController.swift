@@ -2,11 +2,14 @@ import Foundation
 
 // Custom URLSession delegate to bypass SSL certificate validation
 final class SSLBypassDelegate: NSObject, URLSessionDelegate, @unchecked Sendable {
-    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, 
-                   completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    func urlSession(
+        _ session: URLSession, didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
         // Accept any server certificate
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-           let serverTrust = challenge.protectionSpace.serverTrust {
+            let serverTrust = challenge.protectionSpace.serverTrust
+        {
             let credential = URLCredential(trust: serverTrust)
             completionHandler(.useCredential, credential)
         } else {
@@ -26,12 +29,15 @@ public class HTTPAmplifierController: AmplifierController {
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
         sessionConfig.tlsMaximumSupportedProtocolVersion = .TLSv13
-        
+
         // Use the custom delegate to bypass SSL certificate validation
-        self.session = URLSession(configuration: sessionConfig, delegate: sslBypassDelegate, delegateQueue: nil)
+        self.session = URLSession(
+            configuration: sessionConfig, delegate: sslBypassDelegate, delegateQueue: nil)
     }
 
-    private func makeRequest(type: Int, data: String? = nil) async throws -> Data {
+    private func makeRequest(
+        type: Int, path: String = "/ajax/globals/get_config", data: String? = nil
+    ) async throws -> Data {
         var components = URLComponents()
         components.scheme = "https"
         components.host = config.host
@@ -45,7 +51,7 @@ public class HTTPAmplifierController: AmplifierController {
                 URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970 * 1000))),
             ]
         } else {
-            components.path = "/ajax/globals/get_config"
+            components.path = path
             components.queryItems = [
                 URLQueryItem(name: "type", value: String(type)),
                 URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970 * 1000))),
@@ -85,12 +91,12 @@ public class HTTPAmplifierController: AmplifierController {
         let data = "<MainZone><Power>3</Power></MainZone>"
         _ = try await makeRequest(type: 4, data: data)
     }
-    
+
     public func switchToSource(index: Int) async throws {
         let data = "<Source zone=\"1\" index=\"\(index)\"></Source>"
         _ = try await makeRequest(type: 7, data: data)
     }
-    
+
     public func switchToSonos() async throws {
         try await switchToSource(index: 4)
     }
@@ -120,28 +126,55 @@ public class HTTPAmplifierController: AmplifierController {
         return sources
     }
 
-    public func getMainZoneStatus() async throws -> (name: String, isPowered: Bool) {
-        let data = try await makeRequest(type: 1)
-        let xmlDoc = try parseXMLData(data)
+    public func getMainZoneStatus() async throws -> (
+        name: String, isPowered: Bool, sourceName: String?
+    ) {
+        // Request 1 from home path returns zone name and source name
+        let sourceData = try await makeRequest(type: 1, path: "/ajax/home/get_config")
+        let sourceXml = try parseXMLData(sourceData)
 
-        guard let root = xmlDoc.rootElement() else {
+        // Request 4 returns power status
+        let powerData = try await makeRequest(type: 4)
+        let powerXml = try parseXMLData(powerData)
+
+        // For debugging - print the XML responses
+        // print("Source XML (home): \(String(data: sourceData, encoding: .utf8) ?? "Invalid data")")
+        // print("Power XML: \(String(data: powerData, encoding: .utf8) ?? "Invalid data")")
+
+        // Extract power status from request 4
+        guard let powerRoot = powerXml.rootElement(),
+            let powerNode = try powerRoot.nodes(forXPath: "//MainZone/Power").first as? XMLElement,
+            let powerValue = powerNode.stringValue
+        else {
             throw AmplifierError.invalidResponse
         }
 
-        let powerNodes = try root.nodes(forXPath: "//MainZone/Power")
-        let nameNodes = try root.nodes(forXPath: "//MainZone/Name")
+        // Extract zone name and source name from request 1 (home path)
+        guard let sourceRoot = sourceXml.rootElement() else {
+            throw AmplifierError.invalidResponse
+        }
 
-        guard let powerNode = powerNodes.first as? XMLElement,
-            let powerValue = powerNode.stringValue,
-            let nameNode = nameNodes.first as? XMLElement,
-            let zoneName = nameNode.stringValue
+        // Extract zone name
+        guard
+            let zoneNameNode = try sourceRoot.nodes(forXPath: "//MainZone/ZoneName").first
+                as? XMLElement,
+            let zoneName = zoneNameNode.stringValue
         else {
             throw AmplifierError.invalidResponse
+        }
+
+        // Extract source name (should be available in the same response)
+        var sourceName: String? = nil
+        if let sourceNameNode = try sourceRoot.nodes(forXPath: "//MainZone/SourceName").first
+            as? XMLElement,
+            let name = sourceNameNode.stringValue
+        {
+            sourceName = name
         }
 
         // Power value "1" means ON, "3" means OFF
         let isPowered = powerValue == "1"
 
-        return (name: zoneName, isPowered: isPowered)
+        return (name: zoneName, isPowered: isPowered, sourceName: sourceName)
     }
 }
