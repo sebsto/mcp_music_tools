@@ -23,6 +23,7 @@ let server = MCPServer(
     getQueueTool,
     playAppleMusicTool,
     playAppleMusicPlaylistTool,
+    playStorefrontPlaylistTool,
     getStateTool,
     getRoomsTool,
   ]

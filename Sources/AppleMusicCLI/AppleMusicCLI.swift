@@ -10,7 +10,8 @@ struct AppleMusicSearch: AsyncParsableCommand {
     abstract: "Search the Apple Music catalog",
     subcommands: [
       SearchByArtist.self, SearchByTitle.self, SearchByBoth.self, GetSongDetails.self,
-      ListUserPlaylists.self, GetUserPlaylistDetails.self, SearchUserPlaylists.self,
+      // ListUserPlaylists.self, GetUserPlaylistDetails.self, SearchUserPlaylists.self,
+      GetStorefrontCharts.self, SearchStorefrontPlaylists.self, GetStorefrontPlaylistDetails.self,
       GenerateToken.self,
     ],
     defaultSubcommand: SearchByArtist.self
@@ -454,6 +455,201 @@ struct SearchUserPlaylists: AsyncParsableCommand {
       }
       if let url = playlist.attributes?.url {
         print("URL: \(url)")
+      }
+    }
+  }
+
+  private func getDeveloperToken() async throws -> String {
+    if let token = token {
+      return token
+    } else {
+      // Use default secret if no token is provided
+      let tokenFactory = AppleMusicTokenFactory(secret: defaultSecret)
+      return try await tokenFactory.generateToken()
+    }
+  }
+}
+
+// MARK: - Get Storefront Charts
+
+struct GetStorefrontCharts: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "charts",
+    abstract: "Get storefront charts playlists"
+  )
+
+  @Option(name: .shortAndLong, help: "Apple Music developer token (optional)")
+  var token: String?
+
+  @Option(name: [.customShort("f"), .long], help: "Storefront to search in (e.g., us, fr)")
+  var storefront: String = "us"
+
+  @Option(name: [.customShort("c"), .long], help: "Chart type (e.g., most-played, top-playlists)")
+  var chartType: String?
+
+  @Option(name: [.customShort("g"), .long], help: "Genre filter (e.g., pop, rock, hip-hop-rap)")
+  var genre: String?
+
+  @Option(name: .shortAndLong, help: "Maximum number of results")
+  var limit: Int = 25
+
+  @Option(name: .shortAndLong, help: "Offset for pagination")
+  var offset: Int = 0
+
+  mutating func run() async throws {
+    print("Fetching storefront charts playlists...")
+
+    let developerToken = try await getDeveloperToken()
+    let client = AppleMusicClient(developerToken: developerToken, storefront: storefront)
+
+    // Convert string parameters to enum types if provided
+    let chartTypeEnum: ChartType? = chartType != nil ? ChartType(rawValue: chartType!) : nil
+    let genreEnum: ChartGenre? = genre != nil ? ChartGenre(rawValue: genre!) : nil
+
+    let chartsResponse = try await client.getStorefrontCharts(
+      chartType: chartTypeEnum,
+      genre: genreEnum,
+      limit: limit,
+      offset: offset
+    )
+
+    print("\nFound \(chartsResponse.data.count) playlists:")
+    for (index, playlist) in chartsResponse.data.enumerated() {
+      print("\n[\(index + 1)] \(playlist.attributes?.name ?? "Unknown")")
+      print("ID: \(playlist.id)")
+      if let description = playlist.attributes?.description?.short {
+        print("Description: \(description)")
+      }
+      if let trackCount = playlist.attributes?.trackCount {
+        print("Tracks: \(trackCount)")
+      }
+      if let url = playlist.attributes?.url {
+        print("URL: \(url)")
+      }
+    }
+
+    if chartsResponse.next != nil {
+      print("\nMore playlists available. Use --offset \(offset + limit) to see the next page.")
+    }
+  }
+
+  private func getDeveloperToken() async throws -> String {
+    if let token = token {
+      return token
+    } else {
+      // Use default secret if no token is provided
+      let tokenFactory = AppleMusicTokenFactory(secret: defaultSecret)
+      return try await tokenFactory.generateToken()
+    }
+  }
+}
+
+// MARK: - Search Storefront Playlists
+
+struct SearchStorefrontPlaylists: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "search-playlists",
+    abstract: "Search for storefront playlists by name"
+  )
+
+  @Option(name: .shortAndLong, help: "Apple Music developer token (optional)")
+  var token: String?
+
+  @Option(name: [.customShort("f"), .long], help: "Storefront to search in (e.g., us, fr)")
+  var storefront: String = "us"
+
+  @Option(name: .shortAndLong, help: "Maximum number of results")
+  var limit: Int = 25
+
+  @Argument(help: "Playlist name to search for")
+  var name: String
+
+  mutating func run() async throws {
+    print("Searching for playlists with name: \(name)")
+
+    let developerToken = try await getDeveloperToken()
+    let client = AppleMusicClient(developerToken: developerToken, storefront: storefront)
+
+    let searchResponse = try await client.searchStorefrontPlaylists(name: name, limit: limit)
+
+    if let playlists = searchResponse.results.playlists {
+      print("\nFound \(playlists.data.count) playlists:")
+      for (index, playlist) in playlists.data.enumerated() {
+        print("\n[\(index + 1)] \(playlist.attributes?.name ?? "Unknown")")
+        print("ID: \(playlist.id)")
+        if let description = playlist.attributes?.description?.short {
+          print("Description: \(description)")
+        }
+        if let trackCount = playlist.attributes?.trackCount {
+          print("Tracks: \(trackCount)")
+        }
+        if let url = playlist.attributes?.url {
+          print("URL: \(url)")
+        }
+      }
+    } else {
+      print("No playlists found.")
+    }
+  }
+
+  private func getDeveloperToken() async throws -> String {
+    if let token = token {
+      return token
+    } else {
+      // Use default secret if no token is provided
+      let tokenFactory = AppleMusicTokenFactory(secret: defaultSecret)
+      return try await tokenFactory.generateToken()
+    }
+  }
+}
+
+// MARK: - Get Storefront Playlist Details
+
+struct GetStorefrontPlaylistDetails: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "playlist",
+    abstract: "Get details for a specific storefront playlist by ID"
+  )
+
+  @Option(name: .shortAndLong, help: "Apple Music developer token (optional)")
+  var token: String?
+
+  @Option(name: [.customShort("f"), .long], help: "Storefront to search in (e.g., us, fr)")
+  var storefront: String = "us"
+
+  @Argument(help: "Playlist ID")
+  var playlistId: String
+
+  mutating func run() async throws {
+    print("Getting details for playlist ID: \(playlistId)")
+
+    let developerToken = try await getDeveloperToken()
+    let client = AppleMusicClient(developerToken: developerToken, storefront: storefront)
+
+    let playlist = try await client.getStorefrontPlaylistDetails(id: playlistId)
+
+    print("\nPlaylist Details:")
+    print("Name: \(playlist.attributes?.name ?? "Unknown")")
+
+    if let description = playlist.attributes?.description?.standard {
+      print("Description: \(description)")
+    }
+
+    if let trackCount = playlist.attributes?.trackCount {
+      print("Track Count: \(trackCount)")
+    }
+
+    if let url = playlist.attributes?.url {
+      print("URL: \(url)")
+    }
+
+    // Print tracks if available
+    if let tracks = playlist.relationships?.tracks?.data, !tracks.isEmpty {
+      print("\nTracks:")
+      for (index, track) in tracks.enumerated() {
+        print(
+          "[\(index + 1)] \(track.attributes?.name ?? "Unknown") - \(track.attributes?.artistName ?? "Unknown")"
+        )
       }
     }
   }

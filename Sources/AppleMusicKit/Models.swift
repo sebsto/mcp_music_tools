@@ -12,12 +12,14 @@ public struct SearchResults: Codable {
   public let songs: SongResults?
   public let artists: ArtistResults?
   public let albums: AlbumResults?
+  public let playlists: PlaylistResults?
 
-  public init(songs: SongResults? = nil, artists: ArtistResults? = nil, albums: AlbumResults? = nil)
+  public init(songs: SongResults? = nil, artists: ArtistResults? = nil, albums: AlbumResults? = nil, playlists: PlaylistResults? = nil)
   {
     self.songs = songs
     self.artists = artists
     self.albums = albums
+    self.playlists = playlists
   }
 }
 
@@ -38,6 +40,13 @@ public struct ArtistResults: Codable {
 /// Container for album search results
 public struct AlbumResults: Codable {
   public let data: [Album]
+  public let href: String
+  public let next: String?
+}
+
+/// Container for playlist search results
+public struct PlaylistResults: Codable {
+  public let data: [Playlist]
   public let href: String
   public let next: String?
 }

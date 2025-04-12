@@ -16,6 +16,7 @@ struct SonosCLI: AsyncParsableCommand {
       Volume.self,
       Queue.self,
       AppleMusic.self,
+      StorefrontPlaylist.self,
       State.self,
       Rooms.self,
     ],
