@@ -43,10 +43,15 @@ let package = Package(
             name: "AmplifierTool",
             targets: ["AmplifierTool"]
         ),
+        .executable(
+            name: "BedrockCLI",
+            targets: ["BedrockCLI"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
+        .package(url: "https://github.com/sebsto/swift-bedrock-library.git", branch: "main"),
         .package(path: "../mcpserverkit"),
     ],
     targets: [
@@ -104,6 +109,15 @@ let package = Package(
             dependencies: [
                 "AmplifierKit",
                 .product(name: "MCPServerKit", package: "mcpserverkit"),
+            ]
+        ),
+        .executableTarget(
+            name: "BedrockCLI",
+            dependencies: [
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "BedrockService", package: "swift-bedrock-library"),
+                .product(name: "BedrockTypes", package: "swift-bedrock-library"),
+                "AppleMusicKit",
             ]
         ),
         .testTarget(
