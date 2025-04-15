@@ -14,43 +14,24 @@ struct BedrockCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "AWS region to use")
     var region: String = "us-east-1"
 
-    @Option(name: .shortAndLong, help: "AWS SSO profile name to use (enables SSO authentication)")
-    var sso: String?
+    @Flag(name: .shortAndLong, help: "Use SSO authentication (default: false)")
+    var sso: Bool  = false
 
-    // can I use the Region iitializer here ?
-    func getRegion() -> Region {
-        switch region.lowercased() {
-        case "us-east-1":
-            return .useast1
-        case "us-west-1":
-            return .uswest1
-        case "us-west-2":
-            return .uswest2
-        case "eu-central-1":
-            return .eucentral1
-        case "ap-northeast-1":
-            return .apnortheast1
-        case "ap-southeast-1":
-            return .apsoutheast1
-        case "ap-southeast-2":
-            return .apsoutheast2
-        default:
-            return .useast1
-        }
-    }
+    @Option(name: .shortAndLong, help: "The name of the profile to use (default: default)")
+    var profileName: String = "default"
 
     mutating func run() async throws {
         let bedrock = try await BedrockService(
-            region: getRegion(),
-            useSSO: sso != nil,
-            ssoProfileName: sso ?? "default"
+            region: Region(rawValue: region),
+            useSSO: sso,
+            profileName: profileName
         )
 
         // examples in the readme doesn't compile
         let model: BedrockModel = .claudev3_7_sonnet
 
         // create a Tool
-        let tool = Tool(
+        let tool = try Tool(
             name: "search_apple_music",
             inputSchema: toolInputSchema(),
             description:
@@ -78,52 +59,56 @@ struct BedrockCLI: AsyncParsableCommand {
 
         while true {
             print("\nYou: ", terminator: "")
-            guard let input = readLine(), !input.isEmpty else { continue }
+            var prompt: String? = readLine()
+            guard prompt?.isEmpty == false else { continue }
 
-            if ["exit", "quit"].contains(input.lowercased()) {
+            if ["exit", "quit"].contains(prompt?.lowercased()) {
                 break
             }
+
+            var toolResult: ToolResultBlock? = nil
 
             do {
                 let reply = try await bedrock.converse(
                     with: model,
-                    prompt: input,
+                    prompt: prompt,
                     history: conversation,
                     tools: tools,
+                    toolResult: toolResult
                 )
-                conversation += reply.history
                 print("\nAssistant: \(reply)")
 
-                if reply.hasToolUse() {
-                    let toolUse = try reply.getToolUse()
+                if let toolUse = try? reply.getToolUse() {
                     print("\nTool Use: \(toolUse.name)")
                     // print("Input: \(toolUse.input)")
 
-                    let input = toolUse.input.value as? [String: JSON]
-                    let artist: String = (input?["artist"] as? JSON)?.value as! String
-                    let title: String = (input?["title"] as? JSON)?.value as! String
+                    let input = toolUse.input
+                    let artist: String = input["artist"] ?? ""
+                    let title: String = input["title"] ?? ""
 
                     // // Use default token generation from AppleMusicKit
                     let client = try await AppleMusicClient(storefront: "be")
-                    let results = try await client.searchByArtistAndTitle(
+                    let results: SearchResponse = try await client.searchByArtistAndTitle(
                         artist: artist, title: title)
 
                     let resultData = try JSONEncoder().encode(results)
                     let resultJSON = try JSONDecoder().decode(JSON.self, from: resultData)
-                    let toolResult = ToolResultBlock(resultJSON, id: toolUse.id)
+                    toolResult = ToolResultBlock(resultJSON, id: toolUse.id)
+                    prompt = nil
 
                     // let message = Message(toolResult)
                     // conversation.append(message)
 
-                    let reply = try await bedrock.converse(
-                        with: model,
-                        history: conversation,
-                        tools: tools,
-                        toolResult: toolResult
-                    )
-                    conversation += reply.history
-                    print("\nAssistant: \(reply)")
+                    // let reply = try await bedrock.converse(
+                    //     with: model,
+                    //     history: conversation,
+                    //     tools: tools,
+                    //     toolResult: toolResult
+                    // )
+                    // conversation = reply.history
 
+                } else {
+                    print("\nAssistant: \(reply)")
                 }
 
             } catch {
