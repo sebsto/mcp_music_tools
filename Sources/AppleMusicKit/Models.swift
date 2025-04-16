@@ -14,8 +14,10 @@ public struct SearchResults: Codable {
   public let albums: AlbumResults?
   public let playlists: PlaylistResults?
 
-  public init(songs: SongResults? = nil, artists: ArtistResults? = nil, albums: AlbumResults? = nil, playlists: PlaylistResults? = nil)
-  {
+  public init(
+    songs: SongResults? = nil, artists: ArtistResults? = nil, albums: AlbumResults? = nil,
+    playlists: PlaylistResults? = nil
+  ) {
     self.songs = songs
     self.artists = artists
     self.albums = albums

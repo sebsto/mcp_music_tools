@@ -160,7 +160,7 @@ public class AppleMusicClient {
     let endpoint = "/me/library/playlists?limit=\(limit)&term=\(encodedName)"
     return try await performRequest(endpoint: endpoint, userToken: userToken)
   }
-  
+
   /// Get storefront charts playlists
   /// - Parameters:
   ///   - chartType: Type of chart (optional)
@@ -174,45 +174,50 @@ public class AppleMusicClient {
     limit: Int = 25,
     offset: Int = 0
   ) async throws -> StorefrontChartsResponse {
-    var queryItems = ["filter[storefront-chart]=\(storefront)", "limit=\(limit)", "offset=\(offset)"]
-    
+    var queryItems = [
+      "filter[storefront-chart]=\(storefront)", "limit=\(limit)", "offset=\(offset)",
+    ]
+
     if let chartType = chartType {
       queryItems.append("filter[chart]=\(chartType.rawValue)")
     }
-    
+
     if let genre = genre, genre != .all {
       queryItems.append("filter[genre]=\(genre.rawValue)")
     }
-    
+
     let queryString = queryItems.joined(separator: "&")
     let endpoint = "/catalog/\(storefront)/playlists?\(queryString)"
-    
+
     return try await performRequest(endpoint: endpoint)
   }
-  
+
   /// Search for storefront playlists by name
   /// - Parameters:
   ///   - name: The name to search for
   ///   - limit: Maximum number of results to return (default: 25)
   /// - Returns: Search response containing playlists
-  public func searchStorefrontPlaylists(name: String, limit: Int = 25) async throws -> SearchResponse {
+  public func searchStorefrontPlaylists(name: String, limit: Int = 25) async throws
+    -> SearchResponse
+  {
     let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-    let endpoint = "/catalog/\(storefront)/search?types=playlists&term=\(encodedName)&limit=\(limit)"
-    
+    let endpoint =
+      "/catalog/\(storefront)/search?types=playlists&term=\(encodedName)&limit=\(limit)"
+
     return try await performRequest(endpoint: endpoint)
   }
-  
+
   /// Get details for a specific storefront playlist by ID
   /// - Parameter id: The playlist ID
   /// - Returns: Playlist details
   public func getStorefrontPlaylistDetails(id: String) async throws -> Playlist {
     let endpoint = "/catalog/\(storefront)/playlists/\(id)"
     let response: PlaylistResponse = try await performRequest(endpoint: endpoint)
-    
+
     guard let playlist = response.data.first else {
       throw AppleMusicError.noDataReturned
     }
-    
+
     return playlist
   }
 
