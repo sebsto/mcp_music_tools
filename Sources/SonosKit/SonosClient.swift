@@ -130,10 +130,12 @@ public class SonosClient {
   ///   - mode: Playback mode (now, next, queue)
   ///   - room: Optional room name (uses default room if nil)
   /// - Returns: Response from the Sonos API
-  public func playAppleMusicPlaylist(playlistId: String, mode: PlaybackMode = .now, room: String? = nil) async throws {
+  public func playAppleMusicPlaylist(
+    playlistId: String, mode: PlaybackMode = .now, room: String? = nil
+  ) async throws {
     try await playAppleMusic(contentType: .playlist, contentId: playlistId, mode: mode, room: room)
   }
-  
+
   /// Plays, queues, or adds to queue an Apple Music track, album, or playlist in the specified room or the default room.
   /// - Parameters:
   ///   - contentType: The type of Apple Music content (song, album, or playlist).
@@ -202,7 +204,7 @@ public class SonosClient {
       zone.members.map { $0.roomName }
     }
   }
-  
+
   /// Enables or disables shuffle mode in the specified room or the default room.
   /// - Parameters:
   ///   - enabled: Whether to enable or disable shuffle mode.

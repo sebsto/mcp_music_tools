@@ -342,20 +342,20 @@ struct SonosCLI: AsyncParsableCommand {
       }
     }
   }
-  
+
   struct Shuffle: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
       abstract: "Enable or disable shuffle mode"
     )
 
     @OptionGroup var options: Options
-    
+
     @Argument(help: "Enable or disable shuffle mode (on/off)")
     var state: String
-    
+
     func run() async throws {
       let client = options.createClient()
-      
+
       switch state.lowercased() {
       case "on", "true", "1", "yes":
         try await client.setShuffle(enabled: true, room: options.room)
