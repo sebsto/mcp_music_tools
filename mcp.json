@@ -1,15 +1,19 @@
 {
   "mcpServers": {
-    "Search Apple Music": {
-      "command": "/Users/sst/Documents/code/swift/bedrock/music_agent/.build/debug/AppleMusicTool",
+    "SearchAppleMusic": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/AppleMusicTool",
       "args": []
     },
-    "Control Sonos System": {
-      "command": "/Users/sst/Documents/code/swift/bedrock/music_agent/.build/debug/SonosTool",
+    "ControlSonosSystem": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/SonosTool",
       "args": []
     },
-    "Control the Amplifier": {
-      "command": "/Users/sst/Documents/code/swift/bedrock/music_agent/.build/debug/AmplifierTool",
+    "ControlAmplifier": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/AmplifierTool",
+      "args": []
+    },
+    "OpenURL": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/OpenURLTool",
       "args": []
     }
   }

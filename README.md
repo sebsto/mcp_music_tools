@@ -5,6 +5,7 @@ A Swift 6 project containing three libraries for controlling your music ecosyste
 1. **AppleMusicKit**: A library for interacting with the Apple Music API
 2. **SonosKit**: A library for controlling Sonos speakers through the node-sonos-http-api
 3. **AmplifierKit**: A library for controlling Denon/Marantz amplifiers
+4. **OpenURLKit**: A library for opening URLs in the default browser
 
 ## Features
 
@@ -29,6 +30,12 @@ A Swift 6 project containing three libraries for controlling your music ecosyste
 - Get available source names
 - Get amplifier status
 - SSL certificate bypass for local network devices
+- Command-line interface for testing the library
+
+### OpenURLKit
+- Open URLs in the default browser
+- Support for macOS and iOS platforms
+- Error handling for invalid URLs
 - Command-line interface for testing the library
 
 ## Requirements
@@ -227,7 +234,39 @@ swift run AmplifierCLI sources
 swift run AmplifierCLI status
 ```
 
-## Setting Up Apple Music API Access
+### OpenURLKit Library Usage
+
+```swift
+import OpenURLKit
+
+// Open a URL directly
+try URLOpener.open("https://aws.amazon.com")
+
+// Or with a URL object
+let url = URL(string: "https://aws.amazon.com")!
+try URLOpener.open(url)
+
+// Error handling
+do {
+    try URLOpener.open("invalid-url")
+} catch URLOpenerError.invalidURL {
+    print("The URL is invalid")
+} catch URLOpenerError.failedToOpenURL {
+    print("Failed to open the URL")
+} catch {
+    print("An error occurred: \(error)")
+}
+```
+
+### OpenURLCLI Usage
+
+```bash
+# Open a URL in the default browser
+swift run OpenURLCLI open "https://aws.amazon.com"
+
+# Or use the default subcommand
+swift run OpenURLCLI "https://aws.amazon.com"
+```
 
 To use the Apple Music API, you need to obtain developer credentials:
 

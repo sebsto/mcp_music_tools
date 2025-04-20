@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 import PackageDescription
 
 let package = Package(
@@ -19,6 +19,10 @@ let package = Package(
             name: "AmplifierKit",
             targets: ["AmplifierKit"]
         ),
+        .library(
+            name: "OpenURLKit",
+            targets: ["OpenURLKit"]
+        ),
         .executable(
             name: "AppleMusicCLI",
             targets: ["AppleMusicCLI"]
@@ -30,6 +34,10 @@ let package = Package(
         .executable(
             name: "AmplifierCLI",
             targets: ["AmplifierCLI"]
+        ),
+        .executable(
+            name: "OpenURLCLI",
+            targets: ["OpenURLCLI"]
         ),
         .executable(
             name: "AppleMusicTool",
@@ -44,14 +52,23 @@ let package = Package(
             targets: ["AmplifierTool"]
         ),
         .executable(
+            name: "OpenURLTool",
+            targets: ["OpenURLTool"]
+        ),
+        .executable(
             name: "BedrockCLI",
             targets: ["BedrockCLI"]
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
-        .package(url: "https://github.com/sebsto/swift-bedrock-library.git", branch: "main"),
+//        .package(url: "https://github.com/swiftlang/swift-subprocess.git", branch: "main"),
+        // .package(url: "https://github.com/sebsto/swift-bedrock-library.git", branch: "main"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
+        .package(path: "../swift-subprocess"),
+        .package(path: "../swift-bedrock-library"),
         .package(path: "../mcpserverkit"),
     ],
     targets: [
@@ -69,6 +86,10 @@ let package = Package(
             name: "AmplifierKit",
             dependencies: []
         ),
+        .target(
+            name: "OpenURLKit",
+            dependencies: []
+        ),
         .executableTarget(
             name: "AppleMusicCLI",
             dependencies: [
@@ -87,6 +108,13 @@ let package = Package(
             name: "AmplifierCLI",
             dependencies: [
                 "AmplifierKit",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
+        ),
+        .executableTarget(
+            name: "OpenURLCLI",
+            dependencies: [
+                "OpenURLKit",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
@@ -112,11 +140,21 @@ let package = Package(
             ]
         ),
         .executableTarget(
+            name: "OpenURLTool",
+            dependencies: [
+                "OpenURLKit",
+                .product(name: "MCPServerKit", package: "mcpserverkit"),
+            ]
+        ),
+        .executableTarget(
             name: "BedrockCLI",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "Subprocess", package: "swift-subprocess"),
                 .product(name: "BedrockService", package: "swift-bedrock-library"),
                 .product(name: "BedrockTypes", package: "swift-bedrock-library"),
+                .product(name: "MCP", package: "swift-sdk"),
                 "AppleMusicKit",
             ]
         ),
@@ -131,6 +169,10 @@ let package = Package(
         .testTarget(
             name: "AmplifierKitTests",
             dependencies: ["AmplifierKit"]
+        ),
+        .testTarget(
+            name: "OpenURLKitTests",
+            dependencies: [ "OpenURLKit"]
         ),
     ]
 )
