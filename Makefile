@@ -16,3 +16,10 @@ call-apple:
 
 call-sonos:
 	cat sonos_call.json | swift run SonosTool
+
+run:
+	swift run BedrockCLI --profile-name default
+
+trace:
+	BEDROCK_SERVICE_LOG_LEVEL=trace swift run BedrockCLI --profile-name default
+	
