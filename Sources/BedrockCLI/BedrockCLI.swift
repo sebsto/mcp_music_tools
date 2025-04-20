@@ -5,6 +5,7 @@ import BedrockTypes
 import Foundation
 import Logging
 import MCP
+import OpenURLKit
 import Subprocess
 
 #if canImport(System)
@@ -57,7 +58,7 @@ struct BedrockCLI: AsyncParsableCommand {
 
     let openURLtool = try Tool(
       name: "open_url",
-      inputSchema: toolInputSchema(),
+      inputSchema: openURLToolInputSchema(),
       description:
         "This tool opens a URL in the default web browser. It can be used to open links to websites, articles, or any other online content, including music artwork.",
     )
@@ -136,21 +137,50 @@ struct BedrockCLI: AsyncParsableCommand {
   ) async throws {
     print("\nTool Use: \(toolUse.name)")
 
-    //TODO: dispatch to the correct tool when we use multiple tools
-    let artist: String = toolUse.input["artist"] ?? ""
-    let title: String = toolUse.input["title"] ?? ""
-
-    // Create an AppleMusicClient client with default token generation from AppleMusicKit
-    let client = try await AppleMusicClient(storefront: "be")
-    let results: SearchResponse = try await client.searchByArtistAndTitle(
-      artist: artist, title: title)
+    // Dispatch to the correct tool based on the tool name
+    var toolResult: any Codable
+    
+    switch toolUse.name {
+    case "search_apple_music":
+      toolResult = try await handleAppleMusicSearch(toolUse: toolUse)
+    case "open_url":
+      toolResult = try await handleOpenURL(toolUse: toolUse)
+    default:
+      print("Unknown tool: \(toolUse.name)")
+      return
+    }
+    
     print("Received response from tool")
 
     let nextRequestBuilder = try ConverseRequestBuilder(from: requestBuilder, with: reply)
-      .withToolResult(results)
+      .withToolResult(toolResult)
 
     reply = try await bedrock.converse(with: nextRequestBuilder)
+  }
+  
+  /// Handles the Apple Music search tool
+  /// - Parameter toolUse: The tool use block containing input parameters
+  /// - Returns: The search response
+  private func handleAppleMusicSearch(toolUse: ToolUseBlock) async throws -> SearchResponse {
+    let artist: String = toolUse.input["artist"] ?? ""
+    let title: String = toolUse.input["title"] ?? ""
+    let storefront: String = toolUse.input["storefront"] ?? "be"
 
+    // Create an AppleMusicClient client with default token generation from AppleMusicKit
+    let client = try await AppleMusicClient(storefront: storefront)
+    return try await client.searchByArtistAndTitle(artist: artist, title: title)
+  }
+  
+  /// Handles the open URL tool
+  /// - Parameter toolUse: The tool use block containing input parameters
+  /// - Returns: A confirmation message
+  private func handleOpenURL(toolUse: ToolUseBlock) async throws -> String {
+    guard let urlString: String = toolUse.input["url"] else {
+      throw URLOpenerError.invalidURL
+    }
+    
+    try URLOpener.open(urlString)
+    return "Successfully opened URL: \(urlString)"
   }
 
   private func toolInputSchema() throws -> JSON {
@@ -172,6 +202,22 @@ struct BedrockCLI: AsyncParsableCommand {
               }
           },
           "required": ["artist", "title"]
+      }
+      """
+    return try JSON(from: schema)
+  }
+  
+  private func openURLToolInputSchema() throws -> JSON {
+    let schema = """
+      {
+          "type": "object",
+          "properties": {
+              "url": {
+                  "description": "The URL to open in the default browser",
+                  "type": "string"
+              }
+          },
+          "required": ["url"]
       }
       """
     return try JSON(from: schema)
