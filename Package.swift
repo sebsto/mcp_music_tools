@@ -64,9 +64,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
+        // .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
         // .package(url: "https://github.com/sebsto/swift-bedrock-library.git", branch: "main"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
-        .package(path: "../swift-subprocess"),
         .package(path: "../swift-bedrock-library"),
         .package(path: "../mcpserverkit"),
     ],
@@ -150,10 +149,9 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "Subprocess", package: "swift-subprocess"),
                 .product(name: "BedrockService", package: "swift-bedrock-library"),
                 .product(name: "BedrockTypes", package: "swift-bedrock-library"),
-                .product(name: "MCP", package: "swift-sdk"),
+                .product(name: "MCPClientKit", package: "mcpserverkit"),
                 "AppleMusicKit", "OpenURLKit"
             ]
         ),

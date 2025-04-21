@@ -4,9 +4,8 @@ import BedrockService
 import BedrockTypes
 import Foundation
 import Logging
-import MCP
+import MCPClientKit
 import OpenURLKit
-import Subprocess
 
 #if canImport(System)
   import System
@@ -32,6 +31,9 @@ struct BedrockCLI: AsyncParsableCommand {
 
   mutating func run() async throws {
 
+    var logger = Logger(label: "com.example.bedrockcli")
+    logger.logLevel = .trace 
+
     let auth: BedrockAuthentication
     if sso {
       auth = .sso(profileName: profileName ?? "default")
@@ -46,7 +48,7 @@ struct BedrockCLI: AsyncParsableCommand {
       authentication: auth
     )
 
-    let model: BedrockModel = .claudev3_7_sonnet
+    let model: BedrockModel = .nova_pro
 
     // create Bedrock Tools
     let appleMusicSearchtool = try Tool(
@@ -63,14 +65,29 @@ struct BedrockCLI: AsyncParsableCommand {
         "This tool opens a URL in the default web browser. It can be used to open links to websites, articles, or any other online content, including music artwork.",
     )
 
-    // let mcpClient = try await createMCPClient(
-    //   name: "MyClientName",
-    //   forServer: "SearchAppleMusic"
-    // )
-    // let (tools, cursor) = try await mcpClient.listTools()
-    // print("Tools: \(tools)")
+    let mcpFileURL = URL(
+      fileURLWithPath:
+        "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/mcp.json")
 
-    try await runInteractiveMode(bedrock: bedrock, model: model, tools: [appleMusicSearchtool, openURLtool])
+    var clients: [MCPClient] = []
+    let mcpSearchAppleMusic = try await MCPClient(
+      with: mcpFileURL,
+      name: "BedrockCLI-SearchAppleMusic",
+      for: "SearchAppleMusic",
+      logger: logger
+    )
+    clients.append(mcpSearchAppleMusic)
+
+    let (tools, _) = try await mcpSearchAppleMusic.client.listTools()
+    print("Tools: \(tools)")
+
+    try await runInteractiveMode(
+      bedrock: bedrock, model: model, tools: [appleMusicSearchtool, openURLtool])
+
+    print("Cleaning up...")
+    for client in clients {
+      await client.terminate()
+    }
   }
 
   private func runInteractiveMode(
@@ -139,7 +156,7 @@ struct BedrockCLI: AsyncParsableCommand {
 
     // Dispatch to the correct tool based on the tool name
     var toolResult: any Codable
-    
+
     switch toolUse.name {
     case "search_apple_music":
       toolResult = try await handleAppleMusicSearch(toolUse: toolUse)
@@ -149,7 +166,7 @@ struct BedrockCLI: AsyncParsableCommand {
       print("Unknown tool: \(toolUse.name)")
       return
     }
-    
+
     print("Received response from tool")
 
     let nextRequestBuilder = try ConverseRequestBuilder(from: requestBuilder, with: reply)
@@ -157,7 +174,7 @@ struct BedrockCLI: AsyncParsableCommand {
 
     reply = try await bedrock.converse(with: nextRequestBuilder)
   }
-  
+
   /// Handles the Apple Music search tool
   /// - Parameter toolUse: The tool use block containing input parameters
   /// - Returns: The search response
@@ -170,7 +187,7 @@ struct BedrockCLI: AsyncParsableCommand {
     let client = try await AppleMusicClient(storefront: storefront)
     return try await client.searchByArtistAndTitle(artist: artist, title: title)
   }
-  
+
   /// Handles the open URL tool
   /// - Parameter toolUse: The tool use block containing input parameters
   /// - Returns: A confirmation message
@@ -178,7 +195,7 @@ struct BedrockCLI: AsyncParsableCommand {
     guard let urlString: String = toolUse.input["url"] else {
       throw URLOpenerError.invalidURL
     }
-    
+
     try URLOpener.open(urlString)
     return "Successfully opened URL: \(urlString)"
   }
@@ -206,7 +223,7 @@ struct BedrockCLI: AsyncParsableCommand {
       """
     return try JSON(from: schema)
   }
-  
+
   private func openURLToolInputSchema() throws -> JSON {
     let schema = """
       {
@@ -223,114 +240,4 @@ struct BedrockCLI: AsyncParsableCommand {
     return try JSON(from: schema)
   }
 
-  private func createMCPClient(name: String, forServer: String) async throws -> Client {
-    var logger = Logger(label: "BedrockCLI")
-    logger.logLevel = .trace
-    // Initialize the MCPclient
-    let client = Client(name: name, version: "1.0.0")
-
-    let toolConfig = try getMCPToolCommand(for: "SearchAppleMusic")
-    let command = toolConfig.command
-
-    let serverInputPipe = Pipe()
-    let serverOutputPipe = Pipe()
-    let serverInput: FileDescriptor = FileDescriptor(
-      rawValue: serverInputPipe.fileHandleForReading.fileDescriptor)
-    let serverOutput: FileDescriptor = FileDescriptor(
-      rawValue: serverOutputPipe.fileHandleForWriting.fileDescriptor)
-
-    //FIXME: manage the process lifecycle and close the pipes when terminated
-    // try serverInput.closeAfter {
-    // Start the process before creating the transport
-    logger.debug(
-      "Launching process",
-      metadata: [
-        "command": "\(toolConfig.command)",
-        "arguments": "\(toolConfig.args.joined(separator: " "))",
-      ])
-    let pid = try runDetached(.path(FilePath(command)), input: serverInput, output: serverOutput)
-
-    logger.debug("Process launched with PID", metadata: ["pid": "\(pid)"])
-
-    let transport = StdioTransport(
-      input: serverInput,
-      output: serverOutput,
-      logger: logger)
-    try await client.connect(transport: transport)
-    logger.debug("Connected to MCP server")
-    logger.debug("sleeping for 1 second")
-    try await Task.sleep(nanoseconds: 1_000_000_000)  // Sleep for 1 second to allow the connection to be established
-    logger.debug("done sleeping")
-    // Initialize the connection
-    let result = try await client.initialize()
-    logger.debug("Connection initialized", metadata: ["result": "\(result)"])
-
-    // Wait for the process to finish
-    // process.waitUntilExit()
-    // print("Process finished with exit code: \(process.terminationStatus)")
-    // }
-
-    logger.debug("returning client. How to stop the process ?")
-    return client
-  }
-
-  /// Reads the mcp.json file in the current directory and returns the command and arguments for a given tool name.
-  /// - Parameter toolName: The name of the tool to look up in the mcp.json file
-  /// - Returns: A tuple containing the command path and arguments array
-  /// - Throws: MCPToolError if the file can't be read or parsed, or if the tool name is not found
-  private func getMCPToolCommand(for toolName: String) throws -> MCPConfiguration.ToolConfiguration
-  {
-    // Get the current directory URL
-    let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let mcpFileURL = currentDirectoryURL.appendingPathComponent("mcp.json")
-
-    // Read the mcp.json file
-    do {
-      let mcpData = try Data(contentsOf: mcpFileURL)
-
-      // Parse the JSON
-      let mcpJSON = try JSONDecoder().decode(MCPConfiguration.self, from: mcpData)
-
-      // Look for the tool
-      guard let toolConfig = mcpJSON.mcpServers[toolName] else {
-        throw MCPToolError.toolNotFound(name: toolName)
-      }
-
-      return toolConfig
-    } catch is DecodingError {
-      throw MCPToolError.invalidFormat(reason: "JSON structure does not match expected format")
-    } catch let error as MCPToolError {
-      throw error
-    } catch {
-      throw MCPToolError.fileNotFound(path: mcpFileURL.path)
-    }
-  }
-
-  /// Structure representing the MCP configuration file format
-  private struct MCPConfiguration: Decodable {
-    let mcpServers: [String: ToolConfiguration]
-
-    struct ToolConfiguration: Decodable {
-      let command: String
-      let args: [String]
-    }
-  }
-
-  /// Custom error type for MCP tool command operations
-  enum MCPToolError: Swift.Error, CustomStringConvertible {
-    case fileNotFound(path: String)
-    case invalidFormat(reason: String)
-    case toolNotFound(name: String)
-
-    var description: String {
-      switch self {
-      case .fileNotFound(let path):
-        return "Could not read MCP configuration file at \(path)"
-      case .invalidFormat(let reason):
-        return "Invalid MCP configuration format: \(reason)"
-      case .toolNotFound(let name):
-        return "Tool '\(name)' not found in MCP configuration"
-      }
-    }
-  }
 }
