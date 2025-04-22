@@ -32,7 +32,7 @@ struct BedrockCLI: AsyncParsableCommand {
   mutating func run() async throws {
 
     var logger = Logger(label: "com.example.bedrockcli")
-    logger.logLevel = .trace 
+    logger.logLevel = .trace
 
     let auth: BedrockAuthentication
     if sso {
@@ -50,48 +50,37 @@ struct BedrockCLI: AsyncParsableCommand {
 
     let model: BedrockModel = .nova_pro
 
-    // create Bedrock Tools
-    let appleMusicSearchtool = try Tool(
-      name: "search_apple_music",
-      inputSchema: toolInputSchema(),
-      description:
-        "This tool searches the Apple Music catalog for songs, albums, and playlists based on the provided input: the artist name and the song or album title.",
-    )
-
-    let openURLtool = try Tool(
-      name: "open_url",
-      inputSchema: openURLToolInputSchema(),
-      description:
-        "This tool opens a URL in the default web browser. It can be used to open links to websites, articles, or any other online content, including music artwork.",
-    )
-
     let mcpFileURL = URL(
       fileURLWithPath:
         "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/mcp.json")
 
-    var clients: [MCPClient] = []
+    var mcpTools: [MCPClient] = []
     let mcpSearchAppleMusic = try await MCPClient(
       with: mcpFileURL,
       name: "BedrockCLI-SearchAppleMusic",
       for: "SearchAppleMusic",
       logger: logger
     )
-    clients.append(mcpSearchAppleMusic)
+    let mcpOpenURL = try await MCPClient(
+      with: mcpFileURL,
+      name: "BedrockCLI-OpenURL",
+      for: "OpenURL",
+      logger: logger
+    )
+    mcpTools.append(contentsOf: [mcpSearchAppleMusic, mcpOpenURL])
 
-    let (tools, _) = try await mcpSearchAppleMusic.client.listTools()
-    print("Tools: \(tools)")
+    // let tools = try await mcpTools.listTools().joined(separator: "\n")
+    // print("\(tools)")
 
     try await runInteractiveMode(
-      bedrock: bedrock, model: model, tools: [appleMusicSearchtool, openURLtool])
+      bedrock: bedrock, model: model, tools: mcpTools)
 
     print("Cleaning up...")
-    for client in clients {
-      await client.terminate()
-    }
+    await mcpTools.cleanup()
   }
 
   private func runInteractiveMode(
-    bedrock: BedrockService, model: BedrockModel, tools: [BedrockTypes.Tool]
+    bedrock: BedrockService, model: BedrockModel, tools: [MCPClient]
   )
     async throws
   {
@@ -119,11 +108,13 @@ struct BedrockCLI: AsyncParsableCommand {
       }
 
       do {
+        // convert MCP Tools to Bedrock Tools
+        let bedrockTools = try await tools.bedrockTools()
         let requestBuilder = try ConverseRequestBuilder(with: model)
           .withPrompt(prompt)
           .withHistory(reply?.getHistory() ?? [])
           .withSystemPrompts(["Your are a music expert. Use tools to search for songs."])
-          .withTools(tools)
+          .withTools(bedrockTools)
 
         reply = try await bedrock.converse(with: requestBuilder)
 
@@ -199,45 +190,28 @@ struct BedrockCLI: AsyncParsableCommand {
     try URLOpener.open(urlString)
     return "Successfully opened URL: \(urlString)"
   }
+}
 
-  private func toolInputSchema() throws -> JSON {
-    let schema = """
-      {
-          "type": "object",
-          "properties": {
-              "artist": {
-                  "description": "The artist name to search for",
-                  "type": "string"
-              },
-              "title": {
-                  "description": "The song title to search for",
-                  "type": "string"
-              },
-              "storefront": {
-                  "description": "Optional Apple Music storefront (default: be)",
-                  "type": "string"
-              }
-          },
-          "required": ["artist", "title"]
-      }
-      """
-    return try JSON(from: schema)
+extension Array where Element == MCPClient {
+
+  // return an array of Bedrock Tool structure for each MCP Client Tool
+  func bedrockTools() async throws -> [BedrockTypes.Tool] {
+    var bedrockTools: [BedrockTypes.Tool] = []
+    for mcpClient in self {
+      let mcpTools = try await mcpClient.client.listTools()
+      bedrockTools.append(
+        contentsOf: mcpTools.tools.compactMap {
+          try? BedrockTypes.Tool(
+            name: $0.name, inputSchema: inputSchemaFromValue($0.inputSchema),
+            description: $0.description)
+        })
+    }
+    return bedrockTools
   }
 
-  private func openURLToolInputSchema() throws -> JSON {
-    let schema = """
-      {
-          "type": "object",
-          "properties": {
-              "url": {
-                  "description": "The URL to open in the default browser",
-                  "type": "string"
-              }
-          },
-          "required": ["url"]
-      }
-      """
-    return try JSON(from: schema)
+  private func inputSchemaFromValue(_ value: Encodable) throws -> JSON {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(value)
+    return try JSON(from: data)
   }
-
 }
