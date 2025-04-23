@@ -123,6 +123,7 @@ struct BedrockCLI: AsyncParsableCommand {
           try await resolveToolUse(
             bedrock: bedrock,
             requestBuilder: requestBuilder,
+            tools: tools,
             toolUse: toolUse,
             reply: &reply!
           )
@@ -140,55 +141,36 @@ struct BedrockCLI: AsyncParsableCommand {
   private func resolveToolUse(
     bedrock: BedrockService,
     requestBuilder: ConverseRequestBuilder,
+    tools: [MCPClient],
     toolUse: ToolUseBlock,
     reply: inout ConverseReply
   ) async throws {
-    print("\nTool Use: \(toolUse.name)")
 
-    // Dispatch to the correct tool based on the tool name
-    var toolResult: any Codable
+    print("Tool Use: \(toolUse.name)")
 
-    switch toolUse.name {
-    case "search_apple_music":
-      toolResult = try await handleAppleMusicSearch(toolUse: toolUse)
-    case "open_url":
-      toolResult = try await handleOpenURL(toolUse: toolUse)
-    default:
-      print("Unknown tool: \(toolUse.name)")
+    // convert swift-bedrock-library's input to a MCP swift-sdk [String: Value]?
+    let mcpToolInput = try toolUse.input.toMCPInput()
+
+    // find the tool (Dispatch to the correct tool based on the tool name)
+    guard let client = try? await tools.clientForTool(named: toolUse.name) else {
+      print("Tool \(toolUse.name) not found")
       return
     }
 
-    print("Received response from tool")
+    // invoke the tool
+    let (content, error) = try await client.callTool(name: toolUse.name, arguments: mcpToolInput)
+    print("Received response from tool: \(content)")
 
+    guard let c = content.first,
+          case let .text(text) = c else {
+      print("Tool \(toolUse.name) did not return a text response")
+      return
+    }
+    // pass the result back to the model
     let nextRequestBuilder = try ConverseRequestBuilder(from: requestBuilder, with: reply)
-      .withToolResult(toolResult)
+      .withToolResult(text)
 
     reply = try await bedrock.converse(with: nextRequestBuilder)
-  }
-
-  /// Handles the Apple Music search tool
-  /// - Parameter toolUse: The tool use block containing input parameters
-  /// - Returns: The search response
-  private func handleAppleMusicSearch(toolUse: ToolUseBlock) async throws -> SearchResponse {
-    let artist: String = toolUse.input["artist"] ?? ""
-    let title: String = toolUse.input["title"] ?? ""
-    let storefront: String = toolUse.input["storefront"] ?? "be"
-
-    // Create an AppleMusicClient client with default token generation from AppleMusicKit
-    let client = try await AppleMusicClient(storefront: storefront)
-    return try await client.searchByArtistAndTitle(artist: artist, title: title)
-  }
-
-  /// Handles the open URL tool
-  /// - Parameter toolUse: The tool use block containing input parameters
-  /// - Returns: A confirmation message
-  private func handleOpenURL(toolUse: ToolUseBlock) async throws -> String {
-    guard let urlString: String = toolUse.input["url"] else {
-      throw URLOpenerError.invalidURL
-    }
-
-    try URLOpener.open(urlString)
-    return "Successfully opened URL: \(urlString)"
   }
 }
 
@@ -202,16 +184,32 @@ extension Array where Element == MCPClient {
       bedrockTools.append(
         contentsOf: mcpTools.tools.compactMap {
           try? BedrockTypes.Tool(
-            name: $0.name, inputSchema: inputSchemaFromValue($0.inputSchema),
+            name: $0.name, inputSchema: JSON(from: $0.inputSchema),
             description: $0.description)
         })
     }
     return bedrockTools
   }
 
-  private func inputSchemaFromValue(_ value: Encodable) throws -> JSON {
+}
+
+extension JSON {
+  // this method converts a Codable representation of JSON as expressed in the MCP swift-sdk
+  // to a JSON object that can be used in the BedrockTypes.Tool
+  // Source : https://github.com/modelcontextprotocol/swift-sdk/blob/main/Sources/MCP/Base/Value.swift
+  // Destination : https://github.com/sebsto/swift-bedrock-library/blob/main/Sources/BedrockTypes/Converse/JSON.swift
+  // I choose to not use `Value` in the header of the function to not add a dependency on Mcp swift-sdk here
+  init(from value: MCPValue?) throws {
     let encoder = JSONEncoder()
     let data = try encoder.encode(value)
-    return try JSON(from: data)
+    self = try JSON(from: data)
+  }
+
+  func toMCPInput() throws -> [String: MCPValue] {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(self)
+    let decoder = JSONDecoder()
+    let result = try decoder.decode([String: MCPValue].self, from: data)
+    return result
   }
 }
