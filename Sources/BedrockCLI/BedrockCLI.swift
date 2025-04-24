@@ -54,20 +54,10 @@ struct BedrockCLI: AsyncParsableCommand {
       fileURLWithPath:
         "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/mcp.json")
 
-    var mcpTools: [MCPClient] = []
-    let mcpSearchAppleMusic = try await MCPClient(
-      with: mcpFileURL,
-      name: "BedrockCLI-SearchAppleMusic",
-      for: "SearchAppleMusic",
+    let mcpTools: [MCPClient] = try await [MCPClient].create(
+      from: mcpFileURL,
       logger: logger
     )
-    let mcpOpenURL = try await MCPClient(
-      with: mcpFileURL,
-      name: "BedrockCLI-OpenURL",
-      for: "OpenURL",
-      logger: logger
-    )
-    mcpTools.append(contentsOf: [mcpSearchAppleMusic, mcpOpenURL])
 
     // let tools = try await mcpTools.listTools().joined(separator: "\n")
     // print("\(tools)")
@@ -151,24 +141,12 @@ struct BedrockCLI: AsyncParsableCommand {
     // convert swift-bedrock-library's input to a MCP swift-sdk [String: Value]?
     let mcpToolInput = try toolUse.input.toMCPInput()
 
-    // find the tool (Dispatch to the correct tool based on the tool name)
-    guard let client = try? await tools.clientForTool(named: toolUse.name) else {
-      print("Tool \(toolUse.name) not found")
-      return
-    }
-
     // invoke the tool
-    let (content, error) = try await client.callTool(name: toolUse.name, arguments: mcpToolInput)
-    print("Received response from tool: \(content)")
+    let textResult = try await tools.callTool(name: toolUse.name, arguments: mcpToolInput)
 
-    guard let c = content.first,
-          case let .text(text) = c else {
-      print("Tool \(toolUse.name) did not return a text response")
-      return
-    }
     // pass the result back to the model
     let nextRequestBuilder = try ConverseRequestBuilder(from: requestBuilder, with: reply)
-      .withToolResult(text)
+      .withToolResult(textResult)
 
     reply = try await bedrock.converse(with: nextRequestBuilder)
   }
@@ -198,13 +176,14 @@ extension JSON {
   // to a JSON object that can be used in the BedrockTypes.Tool
   // Source : https://github.com/modelcontextprotocol/swift-sdk/blob/main/Sources/MCP/Base/Value.swift
   // Destination : https://github.com/sebsto/swift-bedrock-library/blob/main/Sources/BedrockTypes/Converse/JSON.swift
-  // I choose to not use `Value` in the header of the function to not add a dependency on Mcp swift-sdk here
+  // MCPValue is a vended type from the MCP swift-sdk
   init(from value: MCPValue?) throws {
     let encoder = JSONEncoder()
     let data = try encoder.encode(value)
     self = try JSON(from: data)
   }
 
+  // convert this JSON object to the format expected by the MCP swift-sdk library
   func toMCPInput() throws -> [String: MCPValue] {
     let encoder = JSONEncoder()
     let data = try encoder.encode(self)
