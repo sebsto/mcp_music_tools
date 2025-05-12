@@ -50,34 +50,35 @@ struct BedrockCLI: AsyncParsableCommand {
 
     let model: BedrockModel = .nova_pro
 
-    let mcpFileURL = URL(
+    let mcpFileLocationURL = URL(
       fileURLWithPath:
-        "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/mcp.json")
+        "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools")
 
     let mcpTools: [MCPClient] = try await [MCPClient].create(
-      from: mcpFileURL,
+      from: mcpFileLocationURL,
       logger: logger
     )
 
-    // let tools = try await mcpTools.listTools().joined(separator: "\n")
-    // print("\(tools)")
+    let tools = try await mcpTools.listTools().joined(separator: "\n")
+    logger.trace("\(tools)")
 
+    // start the chat loop
     try await runInteractiveMode(
-      bedrock: bedrock, model: model, tools: mcpTools)
+      bedrock: bedrock, model: model, tools: mcpTools, logger: logger)
 
     print("Cleaning up...")
     await mcpTools.cleanup()
   }
 
   private func runInteractiveMode(
-    bedrock: BedrockService, model: BedrockModel, tools: [MCPClient]
+    bedrock: BedrockService, model: BedrockModel, tools: [MCPClient], logger: Logger
   )
     async throws
   {
 
     // verify that the model supports tool usage
     guard model.hasConverseModality(.toolUse) else {
-      print("\(model.name) does not support converse tools")
+      logger.error("Model does not support converse tools", metadata: ["model": "\(model)"])
       return
     }
 
@@ -115,14 +116,15 @@ struct BedrockCLI: AsyncParsableCommand {
             requestBuilder: requestBuilder,
             tools: tools,
             toolUse: toolUse,
-            reply: &reply!
+            reply: &reply!,
+            logger: logger
           )
         }
 
         print("\nAssistant: \(reply!)")
 
       } catch {
-        print("Error: \(error.localizedDescription)")
+        logger.error("Error: \(error.localizedDescription)")
       }
     }
     print("\nChat session ended")
@@ -133,16 +135,19 @@ struct BedrockCLI: AsyncParsableCommand {
     requestBuilder: ConverseRequestBuilder,
     tools: [MCPClient],
     toolUse: ToolUseBlock,
-    reply: inout ConverseReply
+    reply: inout ConverseReply,
+    logger: Logger
   ) async throws {
 
-    print("Tool Use: \(toolUse.name)")
+    logger.trace("Tool Use: \(toolUse.name)")
 
     // convert swift-bedrock-library's input to a MCP swift-sdk [String: Value]?
     let mcpToolInput = try toolUse.input.toMCPInput()
+    print(mcpToolInput)
 
     // invoke the tool
-    let textResult = try await tools.callTool(name: toolUse.name, arguments: mcpToolInput)
+    let textResult = try await tools.callTool(name: toolUse.name, arguments: mcpToolInput, logger: logger)
+    logger.trace("Tool Result", metadata: ["result": "\(textResult)"])
 
     // pass the result back to the model
     let nextRequestBuilder = try ConverseRequestBuilder(from: requestBuilder, with: reply)
