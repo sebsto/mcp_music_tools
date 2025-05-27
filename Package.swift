@@ -65,8 +65,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
         // .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
-        // .package(url: "https://github.com/sebsto/swift-bedrock-library.git", branch: "main"),
-        .package(path: "../swift-bedrock-library"),
+        // .package(url: "https://github.com/build-on-aws/swift-fm-playground.git", branch: "merge_repos"),
+        .package(path: "../swift-fm-playground"),
         .package(path: "../mcpserverkit"),
     ],
     targets: [
@@ -149,8 +149,8 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "BedrockService", package: "swift-bedrock-library"),
-                .product(name: "BedrockTypes", package: "swift-bedrock-library"),
+                .product(name: "BedrockService", package: "swift-fm-playground"),
+                .product(name: "BedrockTypes", package: "swift-fm-playground"),
                 .product(name: "MCPClientKit", package: "mcpserverkit"),
                 "AppleMusicKit", "OpenURLKit"
             ]
