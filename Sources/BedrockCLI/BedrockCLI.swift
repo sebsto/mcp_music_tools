@@ -102,8 +102,8 @@ struct BedrockCLI: AsyncParsableCommand {
     // convert MCP Tools to Bedrock Tools
     let bedrockTools = try await tools.bedrockTools()
 
-    // temp for debugging 
-    // var i = 0 
+    // temp for debugging
+    // var i = 0
     while true {
 
       print("\nYou: ", terminator: "")
@@ -123,7 +123,9 @@ struct BedrockCLI: AsyncParsableCommand {
         requestBuilder = try ConverseRequestBuilder(with: model)
           .withHistory(messages)
           .withPrompt(prompt)
-          .withSystemPrompts(["Your are a music expert. Use tools to search for songs and artists. Tools allow you to play music in the the house."])
+          .withSystemPrompts([
+            "Your are a music expert. Use tools to search for songs and artists. Tools allow you to play music in the the house."
+          ])
           .withTools(bedrockTools)
       } else {
         // if not, we can just add the prompt to the existing request builder
@@ -134,7 +136,7 @@ struct BedrockCLI: AsyncParsableCommand {
 
       // add the prompt to the history
       messages.append(.init(prompt))
-      
+
       // loop on calling the model while the last message is NOT text
       // in other words, has long as we receive toolUse, call the tool, call the model again and iterate until the lats message is text.
       // TODO : how to manage reasoning ?
@@ -158,9 +160,9 @@ struct BedrockCLI: AsyncParsableCommand {
             logger: logger
           )
 
+          // add the tool result to the history
           if let toolResult = requestBuilder?.toolResult {
             logger.debug("Tool Result", metadata: ["result": "\(toolResult)"])
-            // add the tool result to the history
             messages.append(.init(toolResult))
           } else {
             logger.warning("No tool result found, this is unexpected")
