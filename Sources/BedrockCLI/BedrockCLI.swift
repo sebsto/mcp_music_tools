@@ -1,7 +1,6 @@
 import AppleMusicKit
 import ArgumentParser
 import BedrockService
-import BedrockTypes
 import Foundation
 import Logging
 import MCPClientKit
@@ -9,6 +8,13 @@ import OpenURLKit
 
 #if canImport(System)
   import System
+#endif
+
+/// Extend `Logger.Level` so it can be used as an argument
+#if hasFeature(RetroactiveAttribute)
+  extension Logger.Level: @retroactive ExpressibleByArgument {}
+#else
+  extension Logger.Level: ExpressibleByArgument {}
 #endif
 
 @main
@@ -19,7 +25,7 @@ struct BedrockCLI: AsyncParsableCommand {
   )
 
   @Option(name: .shortAndLong, help: "AWS region to use")
-  var region: String = "us-east-1"
+  var region: String = "eu-west-1"
 
   @Flag(name: .shortAndLong, help: "Use SSO authentication (default: false)")
   var sso: Bool = false
@@ -29,11 +35,16 @@ struct BedrockCLI: AsyncParsableCommand {
     help: "The name of the profile to use. Use the default resolver chain when nil")
   var profileName: String? = nil
 
+  @Option(name: .shortAndLong)
+  var logLevel: Logger.Level?
+
   mutating func run() async throws {
 
     var logger = Logger(label: "bedrockcli")
-    logger.logLevel = .trace
-
+    logger.logLevel =
+      logLevel ?? ProcessInfo.processInfo.environment["LOG_LEVEL"].flatMap {
+        Logger.Level(rawValue: $0)
+      } ?? .info
     let auth: BedrockAuthentication
     if sso {
       auth = .sso(profileName: profileName ?? "default")
@@ -48,8 +59,8 @@ struct BedrockCLI: AsyncParsableCommand {
       authentication: auth
     )
 
-    // let model: BedrockModel = .claudev3_7_sonnet
-    let model: BedrockModel = .nova_pro
+    let model: BedrockModel = .claudev3_7_sonnet
+    // let model: BedrockModel = .nova_pro
 
     let mcpFileLocationURL = URL(
       fileURLWithPath:
@@ -61,7 +72,7 @@ struct BedrockCLI: AsyncParsableCommand {
     )
 
     let tools = try await mcpTools.listTools().joined(separator: "\n")
-    logger.trace("\(tools)")
+    logger.trace("Tools discovered:\n\(tools)")
 
     // start the chat loop
     try await runInteractiveMode(
@@ -73,9 +84,7 @@ struct BedrockCLI: AsyncParsableCommand {
 
   private func runInteractiveMode(
     bedrock: BedrockService, model: BedrockModel, tools: [MCPClient], logger: Logger
-  )
-    async throws
-  {
+  ) async throws {
 
     // verify that the model supports tool usage
     guard model.hasConverseModality(.toolUse) else {
@@ -89,90 +98,100 @@ struct BedrockCLI: AsyncParsableCommand {
 
     // variables we're going to reuse for the duration of the conversation
     var messages: History = []
+    var requestBuilder: ConverseRequestBuilder? = nil
+    // convert MCP Tools to Bedrock Tools
+    let bedrockTools = try await tools.bedrockTools()
 
     while true {
+
       print("\nYou: ", terminator: "")
-      // let prompt: String = readLine() ?? ""
-      let prompt = "Tell me more about Bohemian Rhaspody by Queen"
+      let prompt: String = readLine() ?? ""
+      // let prompt = "Tell me more about Bohemian Rhaspody by Queen"
       guard prompt.isEmpty == false else { continue }
 
       if ["exit", "quit"].contains(prompt.lowercased()) {
         break
       }
 
-      do {
-        print("\nAssistant: ", terminator: "")
+      print("\nAssistant: ", terminator: "")
 
-        // convert MCP Tools to Bedrock Tools
-        let bedrockTools = try await tools.bedrockTools()
-        var requestBuilder = try ConverseRequestBuilder(with: model)
-          .withPrompt(prompt)
+      // is it our first request ?
+      if requestBuilder == nil {
+        requestBuilder = try ConverseRequestBuilder(with: model)
           .withHistory(messages)
-          .withSystemPrompts(["Your are a music expert. Use tools to search for songs."])
+          .withPrompt(prompt)
+          .withSystemPrompts(["Your are a music expert. Use tools to search for songs and artists. Tools allow you to play music in the the house."])
           .withTools(bedrockTools)
+      } else {
+        // if not, we can just add the prompt to the existing request builder
+        requestBuilder = try ConverseRequestBuilder(from: requestBuilder!)
+          .withHistory(messages)
+          .withPrompt(prompt)
+      }
 
-        // resolve tool use :loop on answers until there is one with text content
-        logger.trace("Sending prompt and tools to model",
-                      // ,metadata: ["prompt": "\(prompt)", "tools": "\(bedrockTools)"]
-        )
-        var hasTextContent: Bool = false
-        while !hasTextContent {
+      // add the prompt to the history
+      messages.append(.init(prompt))
+      
+      // loop on calling the model while the last message is NOT text
+      // in other words, has long as we receive toolUse, call the tool, call the model again and iterate until the lats message is text.
+      // TODO : how to manage reasoning ?
+      var lastMessageIsText = false
+      repeat {
+        logger.debug("Calling ConverseStream")
+        let reply = try await bedrock.converseStream(with: requestBuilder!)
+        try await readAndPrintAnswer(reply: reply, messages: &messages, logger: logger)
 
-          logger.trace("Calling ConverseStream)")          
-          for try await element: ConverseStreamElement in try await bedrock.converseStream(
-            with: requestBuilder)
-          {
-
-            // read the stream of elements.  If this is a text content, print it.
-            // otherwise, collect the message.  
-            var currentTextContentBlockIndex: Int = 0
-            switch element {
-            case .messageStart:
-              // is not always sent, so we don't print anything here
-              break
-            case .contentSegment(let contentSegment)  :
-              switch contentSegment {
-              case .text(let index, let text):
-                currentTextContentBlockIndex = index
-                print(text, terminator: "")
-              default:
-                break
-              }
-            case .contentBlockComplete(let index, _):
-              if index == currentTextContentBlockIndex {
-                print("\n\n")
-                hasTextContent = true
-              }
-            case .messageComplete(let message):
-              messages.append(message)
-              print("\n\nMessage complete: \(message)")
-            }
+        // If the last message is toolUse, invoke the tool and
+        // continue the conversation with the tool result.
+        logger.debug("Have receive a complete message, checking is this is tool use")
+        if let toolUse = messages.last?.getToolUse() {
+          logger.debug("Yes, let's use a tool", metadata: ["toolUse": "\(toolUse.name)"])
+          requestBuilder = try await resolveToolUse(
+            bedrock: bedrock,
+            requestBuilder: requestBuilder!,
+            tools: tools,
+            toolUse: toolUse,
+            messages: &messages,
+            logger: logger
+          )
+        } else {
+          logger.debug("No, checking if the last message is text")
+          if messages.last?.hasTextContent() == true {
+            lastMessageIsText = true
+            logger.debug("yes, exiting the loop and ask next question to the user")
+          } else {
+            logger.warning("Last message is not text nor tool use, break out the loop")
+            logger.debug(
+              "Last message", metadata: ["message": "\(String(describing: messages.last))"])
+            break
           }
-
-          // If the message is toolUse, invoke the tool and
-          // continue the conversation with the tool result.
-          logger.trace("Have receive a complete message, checking is this is tool use")
-          if let toolUse = messages.last?.getToolUse() {
-            logger.trace("Let's use a tool", metadata: ["toolUse": "\(toolUse.name)"])
-            requestBuilder = try await resolveToolUse(
-              bedrock: bedrock,
-              requestBuilder: requestBuilder,
-              tools: tools,
-              toolUse: toolUse,
-              messages: &messages,
-              logger: logger
-            )
-          }
-
-          // now we have either text or a new request to resolve tool use
-          // hasText is true, we exit the loop and ask the next question to the user 
-          // otherwise, it was a tool request and we continue the loop, passing the tool response back to the model.
         }
-      } catch {
-        logger.error("Error: \(error.localizedDescription)")
+      } while lastMessageIsText == false
+    }
+
+    print("\nChat session ended")
+
+  }
+
+  private func readAndPrintAnswer(
+    reply: ConverseReplyStream, messages: inout [Message], logger: Logger
+  ) async throws {
+    for try await element: ConverseStreamElement in reply.stream {
+
+      // read the stream of elements.  If this is a text content, print it.
+      // otherwise, collect the message.
+      switch element {
+      case .text(_, let text):
+        print(text, terminator: "")
+      case .toolUse(_, let toolUse):
+        logger.trace("Tool Use", metadata: ["toolUse": "\(toolUse.name)"])
+      case .messageComplete(let message):
+        messages.append(message)
+        print("\n")
+      default:
+        break
       }
     }
-    print("\nChat session ended")
   }
 
   private func resolveToolUse(
@@ -189,12 +208,12 @@ struct BedrockCLI: AsyncParsableCommand {
         "No last message found in the history to resolve tool use"
       )
     }
-    // log the tool use
-    logger.trace("Tool Use: \(toolUse.name)")
 
     // convert swift-bedrock-library's input to a MCP swift-sdk [String: Value]?
     let mcpToolInput = try toolUse.input.toMCPInput()
-    print(mcpToolInput)
+
+    // log the tool use
+    logger.trace("Tool Use", metadata: ["name": "\(toolUse.name)", "input": "\(mcpToolInput)"])
 
     // invoke the tool
     let textResult = try await tools.callTool(
@@ -210,13 +229,13 @@ struct BedrockCLI: AsyncParsableCommand {
 extension Array where Element == MCPClient {
 
   // return an array of Bedrock Tool structure for each MCP Client Tool
-  func bedrockTools() async throws -> [BedrockTypes.Tool] {
-    var bedrockTools: [BedrockTypes.Tool] = []
+  func bedrockTools() async throws -> [Tool] {
+    var bedrockTools: [Tool] = []
     for mcpClient in self {
       let mcpTools = try await mcpClient.client.listTools()
       bedrockTools.append(
         contentsOf: mcpTools.tools.compactMap {
-          try? BedrockTypes.Tool(
+          try? Tool(
             name: $0.name, inputSchema: JSON(from: $0.inputSchema),
             description: $0.description)
         })
@@ -228,9 +247,9 @@ extension Array where Element == MCPClient {
 
 extension JSON {
   // this method converts a Codable representation of JSON as expressed in the MCP swift-sdk
-  // to a JSON object that can be used in the BedrockTypes.Tool
+  // to a JSON object that can be used in the BedrockService.Tool
   // Source : https://github.com/modelcontextprotocol/swift-sdk/blob/main/Sources/MCP/Base/Value.swift
-  // Destination : https://github.com/sebsto/swift-bedrock-library/blob/main/Sources/BedrockTypes/Converse/JSON.swift
+  // Destination : https://github.com/sebsto/swift-bedrock-library/blob/main/Sources/BedrockService/Converse/JSON.swift
   // MCPValue is a vended type from the MCP swift-sdk
   init(from value: MCPValue?) throws {
     let encoder = JSONEncoder()
