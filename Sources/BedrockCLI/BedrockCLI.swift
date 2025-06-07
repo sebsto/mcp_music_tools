@@ -102,11 +102,14 @@ struct BedrockCLI: AsyncParsableCommand {
     // convert MCP Tools to Bedrock Tools
     let bedrockTools = try await tools.bedrockTools()
 
+    // temp for debugging 
+    // var i = 0 
     while true {
 
       print("\nYou: ", terminator: "")
       let prompt: String = readLine() ?? ""
-      // let prompt = "Tell me more about Bohemian Rhaspody by Queen"
+      // let prompt = i == 0 ? "Tell me more about Bohemian Rhaspody by Queen" : "what is its apple music id"
+      // i = i + 1
       guard prompt.isEmpty == false else { continue }
 
       if ["exit", "quit"].contains(prompt.lowercased()) {
@@ -154,6 +157,15 @@ struct BedrockCLI: AsyncParsableCommand {
             messages: &messages,
             logger: logger
           )
+
+          if let toolResult = requestBuilder?.toolResult {
+            logger.debug("Tool Result", metadata: ["result": "\(toolResult)"])
+            // add the tool result to the history
+            messages.append(.init(toolResult))
+          } else {
+            logger.warning("No tool result found, this is unexpected")
+          }
+
         } else {
           logger.debug("No, checking if the last message is text")
           if messages.last?.hasTextContent() == true {
