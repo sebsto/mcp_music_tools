@@ -63,11 +63,7 @@ public class AppleMusicClient {
   ///   - limit: Maximum number of results to return (default: 25)
   /// - Returns: Search response containing results
   public func searchByArtist(_ artistName: String, limit: Int = 25) async throws -> SearchResponse {
-    let encodedArtist =
-      artistName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? artistName
-    let endpoint =
-      "/catalog/\(storefront)/search?types=artists&term=\(encodedArtist)&limit=\(limit)"
-
+    let endpoint = "/catalog/\(storefront)/search?types=artists&term=\(encodeTerm(artistName))&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -77,11 +73,7 @@ public class AppleMusicClient {
   ///   - limit: Maximum number of results to return (default: 25)
   /// - Returns: Search response containing results
   public func searchByTitle(_ title: String, limit: Int = 25) async throws -> SearchResponse {
-    let encodedTitle =
-      title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? title
-    let endpoint =
-      "/catalog/\(storefront)/search?types=songs&term=\(encodedTitle)&limit=\(limit)"
-
+    let endpoint = "/catalog/\(storefront)/search?types=songs&term=\(encodeTerm(title))&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -94,12 +86,8 @@ public class AppleMusicClient {
   public func searchByArtistAndTitle(artist: String, title: String, limit: Int = 25) async throws
     -> SearchResponse
   {
-    let encodedQuery =
-      "\(artist) \(title)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
-      ?? "\(artist) \(title)"
-    let endpoint =
-      "/catalog/\(storefront)/search?types=artists,songs&term=\(encodedQuery)&limit=\(limit)"
-
+    let query = "\(encodeTerm(artist)) \(encodeTerm(title))"
+    let endpoint = "/catalog/\(storefront)/search?types=artists,songs&term=\(query)&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -156,8 +144,7 @@ public class AppleMusicClient {
   public func searchUserPlaylists(name: String, limit: Int = 25, userToken: String) async throws
     -> UserPlaylistsResponse
   {
-    let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-    let endpoint = "/me/library/playlists?limit=\(limit)&term=\(encodedName)"
+    let endpoint = "/me/library/playlists?limit=\(limit)&term=\(encodeTerm(name))"
     return try await performRequest(endpoint: endpoint, userToken: userToken)
   }
 
@@ -200,10 +187,7 @@ public class AppleMusicClient {
   public func searchStorefrontPlaylists(name: String, limit: Int = 25) async throws
     -> SearchResponse
   {
-    let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-    let endpoint =
-      "/catalog/\(storefront)/search?types=playlists&term=\(encodedName)&limit=\(limit)"
-
+    let endpoint = "/catalog/\(storefront)/search?types=playlists&term=\(name)&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -226,9 +210,14 @@ public class AppleMusicClient {
   private func performRequest<T: Decodable>(endpoint: String, userToken: String? = nil) async throws
     -> T
   {
+
     guard let url = URL(string: baseURL + endpoint) else {
       throw AppleMusicError.invalidURL
     }
+
+    print("=========== ")
+    print("Request URL: \(url)")
+    print("=========== ")
 
     var request = URLRequest(url: url)
     request.setValue("Bearer \(developerToken)", forHTTPHeaderField: "Authorization")
@@ -255,5 +244,25 @@ public class AppleMusicClient {
     } catch {
       throw AppleMusicError.decodingError(error)
     }
+  }
+
+  // private func encodeParameter(_ parameter: String) throws -> String {
+  //   // Define a custom character set that allows everything except ',' and '&'
+  //   var allowed = CharacterSet.urlQueryAllowed
+  //   allowed.remove(charactersIn: ",& =+")
+  //   guard let encodedParameter = parameter.addingPercentEncoding(withAllowedCharacters: allowed) else {
+  //     throw AppleMusicError.invalidEncoding
+  //   }    
+  //   return encodedParameter
+  // }
+  private func encodeTerm(_ term: String) -> String {
+    // https://developer.apple.com/documentation/applemusicapi/search-for-catalog-resources-(by-type)
+    // encode the search term with + between words, remove commas, ampersands, and equals signs
+    var encodedTerm: String!
+    encodedTerm = term.replacingOccurrences(of: ",", with: " ")
+    encodedTerm = encodedTerm.replacingOccurrences(of: "&", with: " ")
+    encodedTerm = encodedTerm.replacingOccurrences(of: "=", with: " ")
+    encodedTerm = encodedTerm.replacingOccurrences(of: " ", with: "+")
+    return encodedTerm
   }
 }

@@ -227,6 +227,7 @@ public struct EditorialNotes: Codable {
 /// Apple Music API errors
 public enum AppleMusicError: Error {
   case invalidURL
+  case invalidEncoding
   case invalidResponse
   case httpError(statusCode: Int)
   case decodingError(Error)
@@ -240,6 +241,8 @@ public enum AppleMusicError: Error {
     switch self {
     case .invalidURL:
       return "Invalid URL"
+    case .invalidEncoding:
+      return "Invalid URL encoding"
     case .invalidResponse:
       return "Invalid response from server"
     case .httpError(let statusCode):
