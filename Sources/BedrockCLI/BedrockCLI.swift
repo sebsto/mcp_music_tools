@@ -25,7 +25,7 @@ struct BedrockCLI: AsyncParsableCommand {
   )
 
   @Option(name: .shortAndLong, help: "AWS region to use")
-  var region: String = "eu-west-1"
+  var region: String = "us-east-1"
 
   @Flag(name: .shortAndLong, help: "Use SSO authentication (default: false)")
   var sso: Bool = false
@@ -34,6 +34,9 @@ struct BedrockCLI: AsyncParsableCommand {
     name: .shortAndLong,
     help: "The name of the profile to use. Use the default resolver chain when nil")
   var profileName: String? = nil
+
+  @Option(name: .shortAndLong, help: "Path to temporary credentials file")
+  var tempCredentialsPath: String? = nil
 
   @Option(name: .shortAndLong)
   var logLevel: Logger.Level?
@@ -46,7 +49,15 @@ struct BedrockCLI: AsyncParsableCommand {
         Logger.Level(rawValue: $0)
       } ?? .info
     let auth: BedrockAuthentication
-    if sso {
+    // first check for temporary credentials
+    if let tempCredentialsPath {
+      logger.info(
+        "Using temporary credentials file", metadata: ["path": .string(tempCredentialsPath)])
+      let tempCredentials = try loadAWSCredentials(fromFile: tempCredentialsPath)
+      auth = .static(
+        accessKey: tempCredentials.accessKeyId, secretKey: tempCredentials.secretAccessKey,
+        sessionToken: tempCredentials.sessionToken)
+    } else if sso {
       auth = .sso(profileName: profileName ?? "default")
     } else if let profileName {
       auth = .profile(profileName: profileName)
@@ -56,9 +67,11 @@ struct BedrockCLI: AsyncParsableCommand {
 
     let bedrock = try await BedrockService(
       region: Region(rawValue: region),
+      logger: logger,
       authentication: auth
     )
 
+    // let model: BedrockModel = .nova_lite
     let model: BedrockModel = .claudev3_7_sonnet
     // let model: BedrockModel = .nova_pro
 
@@ -103,13 +116,29 @@ struct BedrockCLI: AsyncParsableCommand {
     let bedrockTools = try await tools.bedrockTools()
 
     // temp for debugging
-    // var i = 0
+    // let prompts = [
+    //   "What is the release date of the original version of Bohemian Rhapsody by Queen",
+    //   "What is its Apple Music ID?",
+    //   "exit"
+    // ]
+    let prompts = [
+      "What is the status of the amplifier?",
+      "exit"
+    ]    
+    // var i = 0 // set this to 0 to automate the conversation while debugging. 
+    var i : Int = Int.max // set this to Int.max to read from stdin
     while true {
 
       print("\nYou: ", terminator: "")
-      let prompt: String = readLine() ?? ""
-      // let prompt = i == 0 ? "Tell me more about Bohemian Rhaspody by Queen" : "what is its apple music id"
-      // i = i + 1
+      var prompt: String = ""
+      if i < prompts.count {
+        // use the prompt from the array
+        prompt = prompts[i]
+        i += 1
+      } else {
+        // read from stdin
+        prompt = readLine() ?? ""
+      }
       guard prompt.isEmpty == false else { continue }
 
       if ["exit", "quit"].contains(prompt.lowercased()) {
@@ -149,7 +178,9 @@ struct BedrockCLI: AsyncParsableCommand {
         // If the last message is toolUse, invoke the tool and
         // continue the conversation with the tool result.
         logger.debug("Have receive a complete message, checking is this is tool use")
-        if let toolUse = messages.last?.getToolUse() {
+        if let msg = messages.last,
+           let toolUse = msg.getToolUse() {
+          logger.trace("Last message", metadata: ["message": "\(msg)"])
           logger.debug("Yes, let's use a tool", metadata: ["toolUse": "\(toolUse.name)"])
           requestBuilder = try await resolveToolUse(
             bedrock: bedrock,
@@ -202,6 +233,8 @@ struct BedrockCLI: AsyncParsableCommand {
       case .messageComplete(let message):
         messages.append(message)
         print("\n")
+      case .metaData(let metadata):
+        logger.trace("Metadata", metadata: ["metadata": "\(metadata)"])
       default:
         break
       }
@@ -237,6 +270,41 @@ struct BedrockCLI: AsyncParsableCommand {
     // pass the result back to the model
     return try ConverseRequestBuilder(from: requestBuilder, with: message)
       .withToolResult(textResult)
+  }
+
+  enum CredentialsError: Error {
+    case fileNotFound(String)
+    case invalidData(String)
+    case decodingError(Error)
+    case credentialsExpired(Date, Date)  // Includes expiration date and current date for context
+  }
+  func loadAWSCredentials(fromFile path: String) throws -> AWSTemporaryCredentials {
+    let fileManager = FileManager.default
+
+    // Check if file exists
+    guard fileManager.fileExists(atPath: path) else {
+      throw CredentialsError.fileNotFound("Credentials file not found at path: \(path)")
+    }
+
+    // Read file data
+    guard let data = fileManager.contents(atPath: path) else {
+      throw CredentialsError.invalidData("Could not read data from file: \(path)")
+    }
+
+    // Decode JSON into AWSTemporaryCredentials
+    let credentials: AWSTemporaryCredentials
+    do {
+      let decoder = JSONDecoder()
+      credentials = try decoder.decode(AWSTemporaryCredentials.self, from: data)
+    } catch {
+      throw CredentialsError.decodingError(error)
+    }
+    // Verify credentials haven't expired
+    let currentDate = Date()
+    if currentDate >= credentials.expiration {
+      throw CredentialsError.credentialsExpired(credentials.expiration, currentDate)
+    }
+    return credentials
   }
 }
 
