@@ -561,7 +561,7 @@ let playAppleMusicToolSchema = """
 
 let playAppleMusicTool = MCPTool<PlayAppleMusicInput, String>(
   name: "playAppleMusic",
-  description: "Play Apple Music content on a Sonos speaker",
+  description: "Play Apple Music content on a Sonos speaker. This must be used to play apple music songs, titles or playslist now, next, or when asked to add items in the queue.",
   inputSchema: playAppleMusicToolSchema,
   converter: { params in
     let contentType = try MCPTool<String, String>.extractParameter(params, name: "contentType")
@@ -620,7 +620,7 @@ let playAppleMusicTool = MCPTool<PlayAppleMusicInput, String>(
     )
 
     return
-      "Playing Apple Music \(input.contentType) with ID \(input.contentId) in room: \(input.room ?? "default room")"
+      "Playing Apple Music \(mode) \(input.contentType) with ID \(input.contentId) in room: \(input.room ?? "default room")"
   }
 )
 

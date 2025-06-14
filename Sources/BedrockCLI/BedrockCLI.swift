@@ -180,8 +180,10 @@ struct BedrockCLI: AsyncParsableCommand {
         logger.debug("Have receive a complete message, checking is this is tool use")
         if let msg = messages.last,
            let toolUse = msg.getToolUse() {
+
           logger.trace("Last message", metadata: ["message": "\(msg)"])
           logger.debug("Yes, let's use a tool", metadata: ["toolUse": "\(toolUse.name)"])
+          
           requestBuilder = try await resolveToolUse(
             bedrock: bedrock,
             requestBuilder: requestBuilder!,
@@ -208,7 +210,7 @@ struct BedrockCLI: AsyncParsableCommand {
             logger.warning("Last message is not text nor tool use, break out the loop")
             logger.debug(
               "Last message", metadata: ["message": "\(String(describing: messages.last))"])
-            break
+            lastMessageIsText = false
           }
         }
       } while lastMessageIsText == false

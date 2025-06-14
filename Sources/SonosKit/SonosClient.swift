@@ -98,7 +98,7 @@ public class SonosClient {
   /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
   ///           `SonosError.requestFailed` if the request fails.
   public func getQueue(
-    limit: Int? = nil, offset: Int? = nil, detailed: Bool = false, room: String? = nil
+    limit: Int? = nil, offset: Int? = nil, detailed: Bool = true, room: String? = nil
   ) async throws -> [SonosQueueItem] {
     let roomName = try resolveRoom(room)
     var pathComponents = [roomName, "queue"]
