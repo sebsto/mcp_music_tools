@@ -32,6 +32,33 @@ public class SonosClient {
     self.defaultRoom = defaultRoom
   }
 
+  /// Joins a room to a group by specifying any room in the target group.
+  /// - Parameters:
+  ///   - room: The room that will join the group. If nil, the default room is used.
+  ///   - targetRoom: The room that is already in the target group.
+  /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
+  ///           `SonosError.requestFailed` if the request fails.
+  public func joinRoom(room: String? = nil, toGroup targetRoom: String) async throws {
+    let roomName = try resolveRoom(room)
+    let url = baseURL.appendingPathComponent(roomName)
+      .appendingPathComponent("join")
+      .appendingPathComponent(targetRoom)
+
+    try await performRequest(url: url)
+  }
+
+  /// Removes a room from its current group, making it a standalone player.
+  /// - Parameter room: The room to remove from its group. If nil, the default room is used.
+  /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
+  ///           `SonosError.requestFailed` if the request fails.
+  public func leaveGroup(room: String? = nil) async throws {
+    let roomName = try resolveRoom(room)
+    let url = baseURL.appendingPathComponent(roomName)
+      .appendingPathComponent("leave")
+
+    try await performRequest(url: url)
+  }
+
   /// Plays music in the specified room or the default room.
   /// - Parameter room: The room to play music in. If nil, the default room is used.
   /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
@@ -78,15 +105,15 @@ public class SonosClient {
   ///   - room: The room to add the track to. If nil, the default room is used.
   /// - Throws: `SonosError.noRoomSpecified` if no room is specified and no default room is set.
   ///           `SonosError.requestFailed` if the request fails.
-  public func addToQueue(uri: String, room: String? = nil) async throws {
-    let roomName = try resolveRoom(room)
-    let encodedURI = uri.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uri
-    let url = baseURL.appendingPathComponent(roomName)
-      .appendingPathComponent("queue")
-      .appendingPathComponent(encodedURI)
+  // public func addToQueue(uri: String, room: String? = nil) async throws {
+  //   let roomName = try resolveRoom(room)
+  //   let encodedURI = uri.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uri
+  //   let url = baseURL.appendingPathComponent(roomName)
+  //     .appendingPathComponent("queue")
+  //     .appendingPathComponent(encodedURI)
 
-    try await performRequest(url: url)
-  }
+  //   try await performRequest(url: url)
+  // }
 
   /// Gets the current queue from the specified room or the default room.
   /// - Parameters:

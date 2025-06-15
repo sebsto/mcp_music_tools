@@ -320,66 +320,66 @@ let setVolumeTool = MCPTool<SetVolumeInput, String>(
 )
 
 // Add To Queue Tool
-struct AddToQueueInput: Codable {
-  let uri: String
-  let room: String?
-  let host: String?
-  let port: Int?
-}
+// struct AddToQueueInput: Codable {
+//   let uri: String
+//   let room: String?
+//   let host: String?
+//   let port: Int?
+// }
 
-let addToQueueToolSchema = """
-  {
-      "type": "object",
-      "properties": {
-          "uri": {
-              "description": "URI of the track to add to the queue",
-              "type": "string"
-          },
-          "room": {
-              "description": "The Sonos room/zone name (optional if default room is set)",
-              "type": "string"
-          },
-          "host": {
-              "description": "Optional host address for the Sonos HTTP API (default: localhost)",
-              "type": "string"
-          },
-          "port": {
-              "description": "Optional port for the Sonos HTTP API (default: 5005)",
-              "type": "integer"
-          }
-      },
-      "required": ["uri"]
-  }
-  """
+// let addToQueueToolSchema = """
+//   {
+//       "type": "object",
+//       "properties": {
+//           "uri": {
+//               "description": "URI of the track to add to the queue",
+//               "type": "string"
+//           },
+//           "room": {
+//               "description": "The Sonos room/zone name (optional if default room is set)",
+//               "type": "string"
+//           },
+//           "host": {
+//               "description": "Optional host address for the Sonos HTTP API (default: localhost)",
+//               "type": "string"
+//           },
+//           "port": {
+//               "description": "Optional port for the Sonos HTTP API (default: 5005)",
+//               "type": "integer"
+//           }
+//       },
+//       "required": ["uri"]
+//   }
+//   """
 
-let addToQueueTool = MCPTool<AddToQueueInput, String>(
-  name: "addToQueue",
-  description: "Add a track to the queue on a Sonos speaker",
-  inputSchema: addToQueueToolSchema,
-  converter: { params in
-    let uri = try MCPTool<String, String>.extractParameter(params, name: "uri")
-    let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
-    let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-    let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+// let addToQueueTool = MCPTool<AddToQueueInput, String>(
+//   name: "addToQueue",
+//   description: "Add a track to the queue on a Sonos speaker",
+//   inputSchema: addToQueueToolSchema,
+//   converter: { params in
+//     let uri = try MCPTool<String, String>.extractParameter(params, name: "uri")
+//     let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
+//     let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
+//     let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
 
-    return AddToQueueInput(
-      uri: uri,
-      room: room,
-      host: host,
-      port: port
-    )
-  },
-  body: { input async throws -> String in
-    let client = SonosClient(
-      host: input.host ?? "localhost",
-      port: input.port ?? 5005,
-      defaultRoom: input.room
-    )
+//     return AddToQueueInput(
+//       uri: uri,
+//       room: room,
+//       host: host,
+//       port: port
+//     )
+//   },
+//   body: { input async throws -> String in
+//     let client = SonosClient(
+//       host: input.host ?? "localhost",
+//       port: input.port ?? 5005,
+//       defaultRoom: input.room
+//     )
 
-    try await client.addToQueue(uri: input.uri, room: input.room)
-    return "Added track to queue in room: \(input.room ?? "default room")"
-  }
-)
+//     try await client.addToQueue(uri: input.uri, room: input.room)
+//     return "Added track to queue in room: \(input.room ?? "default room")"
+//   }
+// )
 
 // Clear Queue Tool
 let clearQueueToolSchema = """
@@ -561,7 +561,8 @@ let playAppleMusicToolSchema = """
 
 let playAppleMusicTool = MCPTool<PlayAppleMusicInput, String>(
   name: "playAppleMusic",
-  description: "Play Apple Music content on a Sonos speaker. This must be used to play apple music songs, titles or playslist now, next, or when asked to add items in the queue.",
+  description:
+    "Play Apple Music content on a Sonos speaker. This must be used to play apple music songs, titles or playslist now, next, or when asked to add items in the queue.",
   inputSchema: playAppleMusicToolSchema,
   converter: { params in
     let contentType = try MCPTool<String, String>.extractParameter(params, name: "contentType")
@@ -695,7 +696,7 @@ let playAppleMusicPlaylistToolSchema = """
               "type": "string"
           },
           "mode": {
-              "description": "Playback mode (now, next, or queue)",
+              "description": "Playback mode (now, next, or add to the queue)",
               "type": "string",
               "enum": ["now", "next", "queue"]
           },
@@ -876,5 +877,115 @@ let setShuffleTool = MCPTool<SetShuffleInput, String>(
     try await client.setShuffle(enabled: input.enabled, room: input.room)
     let status = input.enabled ? "enabled" : "disabled"
     return "Shuffle mode \(status) in room: \(input.room ?? "default room")"
+  }
+)
+
+// Join Room Tool
+struct JoinRoomInput: Codable {
+  let room: String?
+  let targetRoom: String
+  let host: String?
+  let port: Int?
+}
+
+let joinRoomToolSchema = """
+  {
+      "type": "object",
+      "properties": {
+          "room": {
+              "description": "The Sonos room/zone name that will join the group (optional if default room is set)",
+              "type": "string"
+          },
+          "targetRoom": {
+              "description": "The room that is already in the target group",
+              "type": "string"
+          },
+          "host": {
+              "description": "Optional host address for the Sonos HTTP API (default: localhost)",
+              "type": "string"
+          },
+          "port": {
+              "description": "Optional port for the Sonos HTTP API (default: 5005)",
+              "type": "integer"
+          }
+      },
+      "required": ["targetRoom"]
+  }
+  """
+
+let joinRoomTool = MCPTool<JoinRoomInput, String>(
+  name: "joinRoom",
+  description: "Join a Sonos speaker to a group",
+  inputSchema: joinRoomToolSchema,
+  converter: { params in
+    let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
+    let targetRoom = try MCPTool<String, String>.extractParameter(params, name: "targetRoom")
+    let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
+    let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+
+    return JoinRoomInput(
+      room: room,
+      targetRoom: targetRoom,
+      host: host,
+      port: port
+    )
+  },
+  body: { input async throws -> String in
+    let client = SonosClient(
+      host: input.host ?? "localhost",
+      port: input.port ?? 5005,
+      defaultRoom: input.room
+    )
+
+    try await client.joinRoom(room: input.room, toGroup: input.targetRoom)
+    return "Room \(input.room ?? "default room") joined group with \(input.targetRoom)"
+  }
+)
+
+// Leave Group Tool
+let leaveGroupToolSchema = """
+  {
+      "type": "object",
+      "properties": {
+          "room": {
+              "description": "The Sonos room/zone name to remove from its group (optional if default room is set)",
+              "type": "string"
+          },
+          "host": {
+              "description": "Optional host address for the Sonos HTTP API (default: localhost)",
+              "type": "string"
+          },
+          "port": {
+              "description": "Optional port for the Sonos HTTP API (default: 5005)",
+              "type": "integer"
+          }
+      }
+  }
+  """
+
+let leaveGroupTool = MCPTool<RoomInput, String>(
+  name: "leaveGroup",
+  description: "Remove a Sonos speaker from its group",
+  inputSchema: leaveGroupToolSchema,
+  converter: { params in
+    let room = try? MCPTool<String, String>.extractParameter(params, name: "room")
+    let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
+    let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+
+    return RoomInput(
+      room: room,
+      host: host,
+      port: port
+    )
+  },
+  body: { input async throws -> String in
+    let client = SonosClient(
+      host: input.host ?? "localhost",
+      port: input.port ?? 5005,
+      defaultRoom: input.room
+    )
+
+    try await client.leaveGroup(room: input.room)
+    return "Room \(input.room ?? "default room") left its group"
   }
 )

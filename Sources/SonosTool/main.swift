@@ -18,7 +18,7 @@ let server = MCPServer(
     nextTool,
     previousTool,
     setVolumeTool,
-    addToQueueTool,
+    // addToQueueTool,
     clearQueueTool,
     getQueueTool,
     playAppleMusicTool,
@@ -27,6 +27,8 @@ let server = MCPServer(
     getStateTool,
     getRoomsTool,
     setShuffleTool,
+    joinRoomTool,
+    leaveGroupTool,
   ]
 )
 // start the server

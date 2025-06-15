@@ -20,6 +20,7 @@ struct SonosCLI: AsyncParsableCommand {
       State.self,
       Rooms.self,
       Shuffle.self,
+      Group.self,
     ],
     defaultSubcommand: State.self
   )
@@ -130,28 +131,28 @@ struct SonosCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
       abstract: "Manage the queue",
       subcommands: [
-        Add.self,
+        // Add.self,
         Clear.self,
         List.self,
       ]
     )
 
-    struct Add: AsyncParsableCommand {
-      static let configuration = CommandConfiguration(
-        abstract: "Add a track to the queue"
-      )
+    // struct Add: AsyncParsableCommand {
+    //   static let configuration = CommandConfiguration(
+    //     abstract: "Add a track to the queue"
+    //   )
 
-      @OptionGroup var options: Options
+    //   @OptionGroup var options: Options
 
-      @Argument(help: "The URI of the track to add")
-      var uri: String
+    //   @Argument(help: "The URI of the track to add")
+    //   var uri: String
 
-      func run() async throws {
-        let client = options.createClient()
-        try await client.addToQueue(uri: uri, room: options.room)
-        print("Added track to queue in room: \(options.room ?? "default")")
-      }
-    }
+    //   func run() async throws {
+    //     let client = options.createClient()
+    //     try await client.addToQueue(uri: uri, room: options.room)
+    //     print("Added track to queue in room: \(options.room ?? "default")")
+    //   }
+    // }
 
     struct Clear: AsyncParsableCommand {
       static let configuration = CommandConfiguration(
@@ -365,6 +366,47 @@ struct SonosCLI: AsyncParsableCommand {
         print("Shuffle mode disabled in room: \(options.room ?? "default")")
       default:
         throw ValidationError("Invalid shuffle state. Use 'on' or 'off'.")
+      }
+    }
+  }
+
+  struct Group: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+      abstract: "Manage speaker groups",
+      subcommands: [
+        Join.self,
+        Leave.self,
+      ]
+    )
+
+    struct Join: AsyncParsableCommand {
+      static let configuration = CommandConfiguration(
+        abstract: "Join a speaker to a group"
+      )
+
+      @OptionGroup var options: Options
+
+      @Argument(help: "The room that is already in the target group")
+      var targetRoom: String
+
+      func run() async throws {
+        let client = options.createClient()
+        try await client.joinRoom(room: options.room, toGroup: targetRoom)
+        print("Joined room \(options.room ?? "default") to group with \(targetRoom)")
+      }
+    }
+
+    struct Leave: AsyncParsableCommand {
+      static let configuration = CommandConfiguration(
+        abstract: "Remove a speaker from its group"
+      )
+
+      @OptionGroup var options: Options
+
+      func run() async throws {
+        let client = options.createClient()
+        try await client.leaveGroup(room: options.room)
+        print("Room \(options.room ?? "default") left its group")
       }
     }
   }
