@@ -123,10 +123,10 @@ struct BedrockCLI: AsyncParsableCommand {
     // ]
     let prompts = [
       "What is the status of the amplifier?",
-      "exit"
-    ]    
-    // var i = 0 // set this to 0 to automate the conversation while debugging. 
-    var i : Int = Int.max // set this to Int.max to read from stdin
+      "exit",
+    ]
+    // var i = 0 // set this to 0 to automate the conversation while debugging.
+    var i: Int = Int.max  // set this to Int.max to read from stdin
     while true {
 
       print("\nYou: ", terminator: "")
@@ -179,11 +179,12 @@ struct BedrockCLI: AsyncParsableCommand {
         // continue the conversation with the tool result.
         logger.debug("Have receive a complete message, checking is this is tool use")
         if let msg = messages.last,
-           let toolUse = msg.getToolUse() {
+          let toolUse = msg.getToolUse()
+        {
 
           logger.trace("Last message", metadata: ["message": "\(msg)"])
           logger.debug("Yes, let's use a tool", metadata: ["toolUse": "\(toolUse.name)"])
-          
+
           requestBuilder = try await resolveToolUse(
             bedrock: bedrock,
             requestBuilder: requestBuilder!,

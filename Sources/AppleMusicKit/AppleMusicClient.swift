@@ -63,7 +63,8 @@ public class AppleMusicClient {
   ///   - limit: Maximum number of results to return (default: 25)
   /// - Returns: Search response containing results
   public func searchByArtist(_ artistName: String, limit: Int = 25) async throws -> SearchResponse {
-    let endpoint = "/catalog/\(storefront)/search?types=artists&term=\(encodeTerm(artistName))&limit=\(limit)"
+    let endpoint =
+      "/catalog/\(storefront)/search?types=artists&term=\(encodeTerm(artistName))&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -73,7 +74,8 @@ public class AppleMusicClient {
   ///   - limit: Maximum number of results to return (default: 25)
   /// - Returns: Search response containing results
   public func searchByTitle(_ title: String, limit: Int = 25) async throws -> SearchResponse {
-    let endpoint = "/catalog/\(storefront)/search?types=songs&term=\(encodeTerm(title))&limit=\(limit)"
+    let endpoint =
+      "/catalog/\(storefront)/search?types=songs&term=\(encodeTerm(title))&limit=\(limit)"
     return try await performRequest(endpoint: endpoint)
   }
 
@@ -252,7 +254,7 @@ public class AppleMusicClient {
   //   allowed.remove(charactersIn: ",& =+")
   //   guard let encodedParameter = parameter.addingPercentEncoding(withAllowedCharacters: allowed) else {
   //     throw AppleMusicError.invalidEncoding
-  //   }    
+  //   }
   //   return encodedParameter
   // }
   private func encodeTerm(_ term: String) -> String {
