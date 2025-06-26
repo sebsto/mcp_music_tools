@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "SearchAppleMusic": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/AppleMusicTool",
+      "args": []
+    },
+    "ControlSonosSystem": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/SonosTool",
+      "args": []
+    },
+    "ControlAmplifier": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/AmplifierTool",
+      "args": []
+    },
+    "OpenURL": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/OpenURLTool",
+      "args": []
+    }    
+  }
+}
