@@ -2,25 +2,25 @@ import Foundation
 
 /// Secret configuration for Apple Music API authentication
 public struct Secret: Codable, Sendable {
-  /// The private key in PEM format
-  public let privateKey: String
+    /// The private key in PEM format
+    public let privateKey: String
 
-  /// The team ID from your Apple Developer account
-  public let teamId: String
+    /// The team ID from your Apple Developer account
+    public let teamId: String
 
-  /// The key ID from your Apple Developer account
-  public let keyId: String
+    /// The key ID from your Apple Developer account
+    public let keyId: String
 
-  /// Initialize a new Secret
-  /// - Parameters:
-  ///   - privateKey: The private key in PEM format
-  ///   - teamId: The team ID from your Apple Developer account
-  ///   - keyId: The key ID from your Apple Developer account
-  public init(privateKey: String, teamId: String, keyId: String) {
-    self.privateKey = privateKey
-    self.teamId = teamId
-    self.keyId = keyId
-  }
+    /// Initialize a new Secret
+    /// - Parameters:
+    ///   - privateKey: The private key in PEM format
+    ///   - teamId: The team ID from your Apple Developer account
+    ///   - keyId: The key ID from your Apple Developer account
+    public init(privateKey: String, teamId: String, keyId: String) {
+        self.privateKey = privateKey
+        self.teamId = teamId
+        self.keyId = keyId
+    }
 }
 
 // Default secret for development purposes
