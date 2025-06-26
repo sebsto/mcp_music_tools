@@ -14,6 +14,9 @@ list-sonos:
 list-amplifier:
 	echo '{"jsonrpc": "2.0","id": 1,"method": "tools/list"}' | swift run AmplifierTool
 
+list-openurl:
+	echo '{"jsonrpc": "2.0","id": 1,"method": "tools/list"}' | swift run OpenURLTool
+
 call-apple:
 	cat data/apple_music_call.json | swift run AppleMusicTool
 
@@ -31,3 +34,6 @@ trace:
 
 format:
 	swift format format --parallel --recursive --in-place ./Package.swift Examples/ Sources/ Tests/
+
+credentials:
+	isengardcli credentials --awscli stormacq+podcast@amazon.com --role Admin > ~/temp_credentials.json
