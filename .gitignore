@@ -1,14 +1,12 @@
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
-q
 
 # the sonos HTTP API project (must be started before running the app)
 sonos-api 
 # the file with my private key to access the Apple Music API
 DefaultSecret.swift 
 .vscode 
-.amazonq 
 
 ## User settings
 xcuserdata/

@@ -1,5 +1,5 @@
 import Foundation
-import XCTest
+import Testing
 
 @testable import AppleMusicKit
 
@@ -12,11 +12,13 @@ class MockURLSession: URLSessionProtocol {
     }
 }
 
-final class AppleMusicKitTests: XCTestCase {
+@Suite("AppleMusicKit Tests")
+struct AppleMusicKitTests {
     // Mock developer token for testing
     let mockToken = "mock_developer_token"
     let mockStorefront = "us"
 
+    @Test("Search by artist should return correct results")
     func testSearchByArtist() async throws {
         // Create a mock URL session for testing
         let session = MockURLSession()
@@ -64,12 +66,13 @@ final class AppleMusicKitTests: XCTestCase {
         let result = try await client.searchByArtist("Test Artist")
 
         // Verify the results
-        XCTAssertNotNil(result.results.artists)
-        XCTAssertEqual(result.results.artists?.data.count, 1)
-        XCTAssertEqual(result.results.artists?.data[0].attributes?.name, "Test Artist")
-        XCTAssertEqual(result.results.artists?.data[0].attributes?.genreNames, ["Pop", "Rock"])
+        let artists = try #require(result.results.artists, "Artists should not be nil")
+        #expect(artists.data.count == 1)
+        #expect(artists.data[0].attributes?.name == "Test Artist")
+        #expect(artists.data[0].attributes?.genreNames == ["Pop", "Rock"])
     }
 
+    @Test("Search by title should return correct results")
     func testSearchByTitle() async throws {
         // Create a mock URL session for testing
         let session = MockURLSession()
@@ -120,13 +123,14 @@ final class AppleMusicKitTests: XCTestCase {
         let result = try await client.searchByTitle("Test Song")
 
         // Verify the results
-        XCTAssertNotNil(result.results.songs)
-        XCTAssertEqual(result.results.songs?.data.count, 1)
-        XCTAssertEqual(result.results.songs?.data[0].attributes?.name, "Test Song")
-        XCTAssertEqual(result.results.songs?.data[0].attributes?.artistName, "Test Artist")
-        XCTAssertEqual(result.results.songs?.data[0].attributes?.albumName, "Test Album")
+        let songs = try #require(result.results.songs, "Songs should not be nil")
+        #expect(songs.data.count == 1)
+        #expect(songs.data[0].attributes?.name == "Test Song")
+        #expect(songs.data[0].attributes?.artistName == "Test Artist")
+        #expect(songs.data[0].attributes?.albumName == "Test Album")
     }
 
+    @Test("Search by artist and title should return correct results")
     func testSearchByArtistAndTitle() async throws {
         // Create a mock URL session for testing
         let session = MockURLSession()
@@ -193,15 +197,16 @@ final class AppleMusicKitTests: XCTestCase {
         let result = try await client.searchByArtistAndTitle(artist: "Test Artist", title: "Test Song")
 
         // Verify the results
-        XCTAssertNotNil(result.results.songs)
-        XCTAssertEqual(result.results.songs?.data.count, 1)
-        XCTAssertEqual(result.results.songs?.data[0].attributes?.name, "Test Song")
+        let songs = try #require(result.results.songs, "Songs should not be nil")
+        #expect(songs.data.count == 1)
+        #expect(songs.data[0].attributes?.name == "Test Song")
 
-        XCTAssertNotNil(result.results.artists)
-        XCTAssertEqual(result.results.artists?.data.count, 1)
-        XCTAssertEqual(result.results.artists?.data[0].attributes?.name, "Test Artist")
+        let artists = try #require(result.results.artists, "Artists should not be nil")
+        #expect(artists.data.count == 1)
+        #expect(artists.data[0].attributes?.name == "Test Artist")
     }
 
+    @Test("Get song details should return correct information")
     func testGetSongDetails() async throws {
         // Create a mock URL session for testing
         let session = MockURLSession()
@@ -253,11 +258,11 @@ final class AppleMusicKitTests: XCTestCase {
         let song = try await client.getSongDetails(id: "987654321")
 
         // Verify the results
-        XCTAssertEqual(song.id, "987654321")
-        XCTAssertEqual(song.attributes?.name, "Test Song")
-        XCTAssertEqual(song.attributes?.artistName, "Test Artist")
-        XCTAssertEqual(song.attributes?.albumName, "Test Album")
-        XCTAssertEqual(song.attributes?.isrc, "USABC1234567")
-        XCTAssertEqual(song.attributes?.releaseDate, "2023-01-01")
+        #expect(song.id == "987654321")
+        #expect(song.attributes?.name == "Test Song")
+        #expect(song.attributes?.artistName == "Test Artist")
+        #expect(song.attributes?.albumName == "Test Album")
+        #expect(song.attributes?.isrc == "USABC1234567")
+        #expect(song.attributes?.releaseDate == "2023-01-01")
     }
 }

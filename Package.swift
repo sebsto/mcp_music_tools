@@ -65,7 +65,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
         // .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
-        // .package(url: "https://github.com/build-on-aws/swift-bedrock-library.git", branch: "merge_repos"),
+        // .package(url: "https://github.com/build-on-aws/swift-bedrock-library.git", branch: "main"),
         .package(path: "../swift-bedrock-library"),
         .package(path: "../mcpserverkit"),
     ],

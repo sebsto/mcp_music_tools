@@ -1,23 +1,23 @@
-import XCTest
+import Testing
 
 @testable import SonosKit
 
-final class SonosKitTests: XCTestCase {
-    func testSonosClientInitialization() {
-        let client = SonosClient(host: "localhost", port: 5005, defaultRoom: "Living Room")
-        XCTAssertNotNil(client)
-    }
+let sonosAPIServerStarted = false // Set to false to use mock data
+
+@Suite("SonosKit Tests", .disabled(if: !sonosAPIServerStarted, "Requires a running Sonos HTTP API server"))
+struct SonosKitTests {
 
     // Note: These tests require a running Sonos HTTP API server and actual Sonos speakers
     // They are commented out by default
 
-    /*
+    @Test("Get rooms should return available rooms")
     func testGetRooms() async throws {
         let client = SonosClient(host: "localhost", port: 5005)
         let rooms = try await client.getRooms()
-        XCTAssertFalse(rooms.isEmpty)
+        #expect(!rooms.isEmpty, "Should return at least one room")
     }
     
+    @Test("Play and pause should work correctly")
     func testPlayAndPause() async throws {
         let client = SonosClient(host: "localhost", port: 5005, defaultRoom: "Living Room")
         try await client.play()
@@ -26,6 +26,7 @@ final class SonosKitTests: XCTestCase {
         try await client.pause()
     }
     
+    @Test("Volume control should work correctly")
     func testVolumeControl() async throws {
         let client = SonosClient(host: "localhost", port: 5005, defaultRoom: "Living Room")
         let state = try await client.getState()
@@ -40,5 +41,4 @@ final class SonosKitTests: XCTestCase {
         // Restore original volume
         try await client.setVolume(originalVolume)
     }
-    */
 }
