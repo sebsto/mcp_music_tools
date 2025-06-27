@@ -3,7 +3,7 @@ import MCPServerKit
 import OpenURLKit
 import ToolMacro
 
-// Open URL Tool inout data structure
+// Open URL Tool input data structure
 @SchemaDefinition
 struct OpenURLInput: Decodable {
     /// The URL to open in the default browser
@@ -11,7 +11,7 @@ struct OpenURLInput: Decodable {
 }
 
 @Tool(
-    name: "",
+    name: "Open URL",
     description: "Opens a URL in the default browser",
     schema: OpenURLInput.self
 )
@@ -29,4 +29,3 @@ struct OpenURLTool: MCPToolProtocol {
         }
     }
 }
-
