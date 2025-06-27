@@ -1,6 +1,7 @@
 import AmplifierKit
 import MCP
 import MCPServerKit
+import ToolMacro
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -9,42 +10,24 @@ import Foundation
 #endif
 
 // Common input structure for amplifier commands
-struct AmplifierInput: Codable {
+@SchemaDefinition
+public struct AmplifierInput: Codable {
+    /// Optional host address for the amplifier (default: 192.168.1.37)
     let host: String?
+    /// Optional port for the amplifier (default: 10443)
     let port: Int?
 }
 
-// Power On Tool
-let powerOnToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let powerOnTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "powerOn",
     description: "Power on the amplifier",
-    inputSchema: powerOnToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct PowerOnTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -54,39 +37,18 @@ let powerOnTool = MCPTool<AmplifierInput, String>(
         try await controller.powerOn()
         return "Amplifier powered on"
     }
-)
+}
 
-// Power Off Tool
-let powerOffToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let powerOffTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "powerOff",
     description: "Power off the amplifier",
-    inputSchema: powerOffToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct PowerOffTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -96,39 +58,18 @@ let powerOffTool = MCPTool<AmplifierInput, String>(
         try await controller.powerOff()
         return "Amplifier powered off"
     }
-)
+}
 
-// Switch to Sonos Tool
-let switchToSonosToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let switchToSonosTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "switchToSonos",
     description: "Switch amplifier input to Sonos",
-    inputSchema: switchToSonosToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct SwitchToSonosTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -138,39 +79,18 @@ let switchToSonosTool = MCPTool<AmplifierInput, String>(
         try await controller.switchToSonos()
         return "Switched to Sonos input"
     }
-)
+}
 
-// Switch to Apple TV Tool
-let switchToAppleTVToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let switchToAppleTVTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "switchToAppleTV",
     description: "Switch amplifier input to Apple TV",
-    inputSchema: switchToAppleTVToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct SwitchToAppleTVTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -180,53 +100,29 @@ let switchToAppleTVTool = MCPTool<AmplifierInput, String>(
         try await controller.switchToAppleTV()
         return "Switched to Apple TV input"
     }
-)
+}
 
-// Switch to Source Tool
-struct SwitchToSourceInput: Codable {
+// Input structure for switchToSource
+@SchemaDefinition
+public struct SwitchToSourceInput: Codable {
+    /// Source index (1-based)
     let index: Int
+    /// Optional host address for the amplifier (default: 192.168.1.37)
     let host: String?
+    /// Optional port for the amplifier (default: 10443)
     let port: Int?
 }
 
-let switchToSourceToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "index": {
-                "description": "Source index (1-based)",
-                "type": "integer",
-                "minimum": 1
-            },
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        },
-        "required": ["index"]
-    }
-    """
-
-let switchToSourceTool = MCPTool<SwitchToSourceInput, String>(
+@Tool(
     name: "switchToSource",
     description: "Switch amplifier to a specific input source by index",
-    inputSchema: switchToSourceToolSchema,
-    converter: { params in
-        let index = try MCPTool<Int, Int>.extractParameter(params, name: "index")
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: SwitchToSourceInput.self
+)
+public struct SwitchToSourceTool: MCPToolProtocol {
+    public typealias Input = SwitchToSourceInput
+    public typealias Output = String
 
-        return SwitchToSourceInput(
-            index: index,
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: SwitchToSourceInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -236,39 +132,18 @@ let switchToSourceTool = MCPTool<SwitchToSourceInput, String>(
         try await controller.switchToSource(index: input.index)
         return "Switched to source with index \(input.index)"
     }
-)
+}
 
-// Get Sources Tool
-let getSourcesToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let getSourcesTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "getSources",
     description: "Get a list of available input sources",
-    inputSchema: getSourcesToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct GetSourcesTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -296,39 +171,18 @@ let getSourcesTool = MCPTool<AmplifierInput, String>(
         )
         return String(decoding: jsonData, as: UTF8.self)
     }
-)
+}
 
-// Get Status Tool
-let getStatusToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "host": {
-                "description": "Optional host address for the amplifier (default: 192.168.1.37)",
-                "type": "string"
-            },
-            "port": {
-                "description": "Optional port for the amplifier (default: 10443)",
-                "type": "integer"
-            }
-        }
-    }
-    """
-
-let getStatusTool = MCPTool<AmplifierInput, String>(
+@Tool(
     name: "getStatus",
     description: "Get the current status of the amplifier",
-    inputSchema: getStatusToolSchema,
-    converter: { params in
-        let host = try? MCPTool<String, String>.extractParameter(params, name: "host")
-        let port = try? MCPTool<Int, Int>.extractParameter(params, name: "port")
+    schema: AmplifierInput.self
+)
+public struct GetStatusTool: MCPToolProtocol {
+    public typealias Input = AmplifierInput
+    public typealias Output = String
 
-        return AmplifierInput(
-            host: host,
-            port: port
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -351,4 +205,4 @@ let getStatusTool = MCPTool<AmplifierInput, String>(
         )
         return String(decoding: jsonData, as: UTF8.self)
     }
-)
+}

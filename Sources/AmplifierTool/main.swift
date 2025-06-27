@@ -12,13 +12,13 @@ let server = MCPServer(
     name: "AmplifierTool",
     version: "1.0.0",
     tools: [
-        powerOnTool,
-        powerOffTool,
-        switchToSonosTool,
-        switchToAppleTVTool,
-        switchToSourceTool,
-        getSourcesTool,
-        getStatusTool,
+        PowerOnTool(),
+        PowerOffTool(),
+        SwitchToSonosTool(),
+        SwitchToAppleTVTool(),
+        SwitchToSourceTool(),
+        GetSourcesTool(),
+        GetStatusTool(),
     ]
 )
 // start the server
