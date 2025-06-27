@@ -1,6 +1,7 @@
 import AppleMusicKit
 import MCP
 import MCPServerKit
+import ToolMacro
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -9,42 +10,24 @@ import Foundation
 #endif
 
 // Search by Artist Tool
-struct SearchByArtistInput: Codable {
+@SchemaDefinition
+public struct SearchByArtistInput: Codable {
+    /// The artist name to search for
     let artist: String
+    /// Optional Apple Music storefront (default: fr)
     let storefront: String?
 }
 
-let searchByArtistToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "artist": {
-                "description": "The artist name to search for",
-                "type": "string"
-            },
-            "storefront": {
-                "description": "Optional Apple Music storefront (default: fr)",
-                "type": "string"
-            }
-        },
-        "required": ["artist"]
-    }
-    """
-
-let searchByArtistTool = MCPTool<SearchByArtistInput, String>(
+@Tool(
     name: "searchByArtist",
     description: "Search the Apple Music catalog by artist name",
-    inputSchema: searchByArtistToolSchema,
-    converter: { params in
-        let artist = try MCPTool<String, String>.extractParameter(params, name: "artist")
-        let storefront = try? MCPTool<String, String>.extractParameter(params, name: "storefront")
+    schema: SearchByArtistInput.self
+)
+public struct SearchByArtistTool: MCPToolProtocol {
+    public typealias Input = SearchByArtistInput
+    public typealias Output = String
 
-        return SearchByArtistInput(
-            artist: artist,
-            storefront: storefront
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: SearchByArtistInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -52,49 +35,30 @@ let searchByArtistTool = MCPTool<SearchByArtistInput, String>(
 
         // Convert results to JSON string
         let encoder = JSONEncoder()
-        // encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(results)
         return String(decoding: data, as: UTF8.self)
     }
-)
+}
 
 // Search by Title Tool
-struct SearchByTitleInput: Codable {
+@SchemaDefinition
+public struct SearchByTitleInput: Codable {
+    /// The song title to search for
     let title: String
+    /// Optional Apple Music storefront (default: fr)
     let storefront: String?
 }
 
-let searchByTitleToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "title": {
-                "description": "The song title to search for",
-                "type": "string"
-            },
-            "storefront": {
-                "description": "Optional Apple Music storefront (default: fr)",
-                "type": "string"
-            }
-        },
-        "required": ["title"]
-    }
-    """
-
-let searchByTitleTool = MCPTool<SearchByTitleInput, String>(
+@Tool(
     name: "searchByTitle",
     description: "Search the Apple Music catalog by song title",
-    inputSchema: searchByTitleToolSchema,
-    converter: { params in
-        let title = try MCPTool<String, String>.extractParameter(params, name: "title")
-        let storefront = try? MCPTool<String, String>.extractParameter(params, name: "storefront")
+    schema: SearchByTitleInput.self
+)
+public struct SearchByTitleTool: MCPToolProtocol {
+    public typealias Input = SearchByTitleInput
+    public typealias Output = String
 
-        return SearchByTitleInput(
-            title: title,
-            storefront: storefront
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: SearchByTitleInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -102,56 +66,32 @@ let searchByTitleTool = MCPTool<SearchByTitleInput, String>(
 
         // Convert results to JSON string
         let encoder = JSONEncoder()
-        // encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(results)
         return String(decoding: data, as: UTF8.self)
     }
-)
+}
 
 // Search by Artist and Title Tool
-struct SearchByArtistAndTitleInput: Codable {
+@SchemaDefinition
+public struct SearchByArtistAndTitleInput: Codable {
+    /// The artist name to search for
     let artist: String
+    /// The song title to search for
     let title: String
+    /// Optional Apple Music storefront (default: fr)
     let storefront: String?
 }
 
-let searchByArtistAndTitleToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "artist": {
-                "description": "The artist name to search for",
-                "type": "string"
-            },
-            "title": {
-                "description": "The song title to search for",
-                "type": "string"
-            },
-            "storefront": {
-                "description": "Optional Apple Music storefront (default: fr)",
-                "type": "string"
-            }
-        },
-        "required": ["artist", "title"]
-    }
-    """
-
-let searchByArtistAndTitleTool = MCPTool<SearchByArtistAndTitleInput, String>(
+@Tool(
     name: "searchByArtistAndTitle",
     description: "Search the Apple Music catalog by both artist name and song title",
-    inputSchema: searchByArtistAndTitleToolSchema,
-    converter: { params in
-        let artist = try MCPTool<String, String>.extractParameter(params, name: "artist")
-        let title = try MCPTool<String, String>.extractParameter(params, name: "title")
-        let storefront = try? MCPTool<String, String>.extractParameter(params, name: "storefront")
+    schema: SearchByArtistAndTitleInput.self
+)
+public struct SearchByArtistAndTitleTool: MCPToolProtocol {
+    public typealias Input = SearchByArtistAndTitleInput
+    public typealias Output = String
 
-        return SearchByArtistAndTitleInput(
-            artist: artist,
-            title: title,
-            storefront: storefront
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: SearchByArtistAndTitleInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -162,49 +102,30 @@ let searchByArtistAndTitleTool = MCPTool<SearchByArtistAndTitleInput, String>(
 
         // Convert results to JSON string
         let encoder = JSONEncoder()
-        // encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(results)
         return String(decoding: data, as: UTF8.self)
     }
-)
+}
 
 // Get Song Details Tool
-struct GetSongDetailsInput: Codable {
+@SchemaDefinition
+public struct GetSongDetailsInput: Codable {
+    /// The Apple Music song ID
     let id: String
+    /// Optional Apple Music storefront (default: fr)
     let storefront: String?
 }
 
-let getSongDetailsToolSchema = """
-    {
-        "type": "object",
-        "properties": {
-            "id": {
-                "description": "The Apple Music song ID",
-                "type": "string"
-            },
-            "storefront": {
-                "description": "Optional Apple Music storefront (default: fr)",
-                "type": "string"
-            }
-        },
-        "required": ["id"]
-    }
-    """
-
-let getSongDetailsTool = MCPTool<GetSongDetailsInput, String>(
+@Tool(
     name: "getSongDetails",
     description: "Get detailed information about a specific song by ID",
-    inputSchema: getSongDetailsToolSchema,
-    converter: { params in
-        let id = try MCPTool<String, String>.extractParameter(params, name: "id")
-        let storefront = try? MCPTool<String, String>.extractParameter(params, name: "storefront")
+    schema: GetSongDetailsInput.self
+)
+public struct GetSongDetailsTool: MCPToolProtocol {
+    public typealias Input = GetSongDetailsInput
+    public typealias Output = String
 
-        return GetSongDetailsInput(
-            id: id,
-            storefront: storefront
-        )
-    },
-    body: { input async throws -> String in
+    public func handler(input: GetSongDetailsInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -212,8 +133,7 @@ let getSongDetailsTool = MCPTool<GetSongDetailsInput, String>(
 
         // Convert results to JSON string
         let encoder = JSONEncoder()
-        // encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(songDetails)
         return String(decoding: data, as: UTF8.self)
     }
-)
+}

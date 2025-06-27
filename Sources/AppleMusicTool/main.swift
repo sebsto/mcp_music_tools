@@ -12,10 +12,10 @@ let server = MCPServer(
     name: "AppleMusicTool",
     version: "1.0.0",
     tools: [
-        searchByArtistTool,
-        searchByTitleTool,
-        searchByArtistAndTitleTool,
-        getSongDetailsTool,
+        SearchByArtistTool(),
+        SearchByTitleTool(),
+        SearchByArtistAndTitleTool(),
+        GetSongDetailsTool(),
     ]
 )
 // start the server
