@@ -1,0 +1,82 @@
+{
+  "name": "amazon_q_default",
+  "description": "Default agent configuration",
+  "prompt": "",
+  "mcpServers": {
+    "SearchAppleMusic": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/AppleMusicTool",
+      "disabled": false,
+      "timeout": 60000
+    },
+    "MusicPlayerTool": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/MusicPlayerTool",
+      "timeout": 60000,
+      "disabled": false
+    },
+    "OpenURL": {
+      "command": "/Users/stormacq/Documents/amazon/code/swift/bedrock/mcp_music_tools/.build/debug/OpenURLTool",
+      "disabled": false,
+      "timeout": 60000
+    }
+  },
+  "tools": [
+    "fsRead",
+    "fsWrite",
+    "fsReplace",
+    "listDirectory",
+    "fileSearch",
+    "executeBash",
+    "codeReview",
+    "displayFindings",
+    "@SearchAppleMusic",
+    "@SearchAppleMusic/searchByArtist",
+    "@SearchAppleMusic/searchByTitle",
+    "@SearchAppleMusic/searchByArtistAndTitle",
+    "@SearchAppleMusic/getSongDetails",
+    "@OpenURL",
+    "@OpenURL/Open URL",
+    "@MusicPlayerTool",
+    "@MusicPlayerTool/controlMusicPlayer",
+  ],
+  "toolAliases": {},
+  "allowedTools": [
+    "fsRead",
+    "listDirectory",
+    "fileSearch",
+    "codeReview",
+    "displayFindings",
+    "@WebPlayerTool/controlMusicPlayer",
+    "@SearchAppleMusic/searchByArtist",
+    "@SearchAppleMusic/searchByTitle",
+    "@SearchAppleMusic/searchByArtistAndTitle",
+    "@SearchAppleMusic/getSongDetails",
+    "@OpenURL/Open URL",
+    "@MusicPlayerTool/ControlMusicPlayer"
+  ],
+  "toolsSettings": {
+    "execute_bash": {
+      "alwaysAllow": [
+        {
+          "preset": "readOnly"
+        }
+      ]
+    },
+    "use_aws": {
+      "alwaysAllow": [
+        {
+          "preset": "readOnly"
+        }
+      ]
+    }
+  },
+  "resources": [
+    "file://AmazonQ.md",
+    "file://README.md",
+    "file://.amazonq/rules/**/*.md"
+  ],
+  "hooks": {
+    "agentSpawn": [],
+    "userPromptSubmit": []
+  },
+  "useLegacyMcpJson": false
+}

@@ -59,6 +59,10 @@ let package = Package(
             name: "BedrockCLI",
             targets: ["BedrockCLI"]
         ),
+        .executable(
+            name: "MusicPlayerTool",
+            targets: ["MusicPlayerTool"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.3"),
@@ -152,6 +156,12 @@ let package = Package(
                 .product(name: "BedrockService", package: "swift-bedrock-library"),
                 .product(name: "MCPClientKit", package: "mcpserverkit"),
                 "AppleMusicKit", "OpenURLKit",
+            ]
+        ),
+        .executableTarget(
+            name: "MusicPlayerTool",
+            dependencies: [
+                .product(name: "MCPServerKit", package: "mcpserverkit"),
             ]
         ),
         .testTarget(
