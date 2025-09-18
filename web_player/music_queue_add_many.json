@@ -1,0 +1,20 @@
+[
+	{
+		"action": "add",
+		"song": "Billie Jeans",
+		"artist": "Michael Jackson",
+		"album": "Thriller",
+		"song_id": 269573364,
+		"artwork": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/32/4f/fd/324ffda2-9e51-8f6a-0c2d-c6fd2b41ac55/074643811224.jpg/800x800bb.jpg",
+		"timestamp": "2025-01-18T10:43:53Z"
+	},
+	{
+		"action": "add",
+		"song": "Bohemian Rhapsody",
+		"artist": "Queen",
+		"album": "A Night at the Opera",
+		"song_id": 1440854551,
+		"artwork": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2a/79/5e/2a795e51-8e3e-a743-0dd5-0947ad3383f0/14UMGIM39390.rgb.jpg/800x800bb.jpg",
+		"timestamp": "2024-01-01T12:00:00Z"
+	}
+]

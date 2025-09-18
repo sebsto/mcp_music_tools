@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Music Player</title>
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .controls { margin: 20px 0; text-align: center; }
+        button { padding: 12px 24px; margin: 5px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
+        #loginBtn { background: #007aff; color: white; }
+        #playBtn { background: #28a745; color: white; }
+        #pauseBtn { background: #ffc107; color: white; }
+        #stopBtn { background: #dc3545; color: white; }
+        #nextBtn { background: #007bff; color: white; }
+        #prevBtn { background: #007bff; color: white; }
+        .queue { margin-top: 20px; }
+        .song { padding: 15px; border-bottom: 1px solid #ddd; display: flex; align-items: center; background: white; margin-bottom: 5px; border-radius: 8px; }
+        .current { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+        .artwork { width: 50px; height: 50px; margin-right: 15px; object-fit: cover; border-radius: 4px; }
+        .now-playing { text-align: center; margin: 20px 0; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .now-playing img { width: 200px; height: 200px; object-fit: cover; border-radius: 8px; margin: 0 auto 15px auto; display: block; }
+        .now-playing-info { margin-top: 10px; }
+        .song-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .song-artist { font-size: 16px; color: #666; margin-bottom: 3px; }
+        .song-album { font-size: 14px; color: #999; }
+    </style>
+</head>
+<body>
+    <h1>Simple Music Player</h1>
+    
+    <div class="now-playing" id="nowPlayingSection" style="display: none;">
+        <img id="currentArtwork" src="" alt="" style="display: none;">
+        <div class="now-playing-info">
+            <div id="currentTitle" class="song-title"></div>
+            <div id="currentArtist" class="song-artist"></div>
+            <div id="currentAlbum" class="song-album"></div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button id="playBtn">Play</button>
+        <button id="stopBtn">Stop</button>
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn">Next</button>
+    </div>
+    
+    <div class="queue">
+        <h3>Queue:</h3>
+        <div id="queueInfo" style="display: none; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; margin-bottom: 15px;">
+            <h4>No queue file found</h4>
+            <p>Create a <code>music_queue_control.json</code> file to control the music queue.</p>
+            <p><strong>Example JSON:</strong></p>
+            <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">{
+  "action": "add",
+  "song": "Billie Jean",
+  "artist": "Michael Jackson",
+  "album": "Thriller",
+  "song_id": 269573364,
+  "artwork": "https://example.com/artwork.jpg",
+  "timestamp": "2025-01-18T10:43:53Z"
+}</pre>
+        </div>
+        <div id="queueList"></div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <button id="loginBtn" style="background: #000; color: white; border: 1px solid #ccc; border-radius: 6px; padding: 12px 24px; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09z"/>
+                <path d="M15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+            </svg>
+            Sign in with Apple
+        </button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
