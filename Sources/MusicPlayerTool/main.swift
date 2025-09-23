@@ -22,5 +22,5 @@ try await server.startStdioServer()
 // )
 
 // let controller = MusicPlayerControlTool()
-// let result = try await controller.handler(input: input)
+// let result = try await controller.handle(input: input)
 // print(result)
