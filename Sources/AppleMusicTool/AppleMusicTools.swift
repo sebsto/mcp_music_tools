@@ -23,11 +23,11 @@ public struct SearchByArtistInput: Codable {
     description: "Search the Apple Music catalog by artist name",
     schema: SearchByArtistInput.self
 )
-public struct SearchByArtistTool: MCPToolProtocol {
+public struct SearchByArtistTool: ToolProtocol {
     public typealias Input = SearchByArtistInput
     public typealias Output = String
 
-    public func handler(input: SearchByArtistInput) async throws -> String {
+    public func handle(input: SearchByArtistInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -54,11 +54,11 @@ public struct SearchByTitleInput: Codable {
     description: "Search the Apple Music catalog by song title",
     schema: SearchByTitleInput.self
 )
-public struct SearchByTitleTool: MCPToolProtocol {
+public struct SearchByTitleTool: ToolProtocol {
     public typealias Input = SearchByTitleInput
     public typealias Output = String
 
-    public func handler(input: SearchByTitleInput) async throws -> String {
+    public func handle(input: SearchByTitleInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -87,11 +87,11 @@ public struct SearchByArtistAndTitleInput: Codable {
     description: "Search the Apple Music catalog by both artist name and song title",
     schema: SearchByArtistAndTitleInput.self
 )
-public struct SearchByArtistAndTitleTool: MCPToolProtocol {
+public struct SearchByArtistAndTitleTool: ToolProtocol {
     public typealias Input = SearchByArtistAndTitleInput
     public typealias Output = String
 
-    public func handler(input: SearchByArtistAndTitleInput) async throws -> String {
+    public func handle(input: SearchByArtistAndTitleInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 
@@ -121,11 +121,11 @@ public struct GetSongDetailsInput: Codable {
     description: "Get detailed information about a specific song by ID",
     schema: GetSongDetailsInput.self
 )
-public struct GetSongDetailsTool: MCPToolProtocol {
+public struct GetSongDetailsTool: ToolProtocol {
     public typealias Input = GetSongDetailsInput
     public typealias Output = String
 
-    public func handler(input: GetSongDetailsInput) async throws -> String {
+    public func handle(input: GetSongDetailsInput) async throws -> String {
         // Use default token generation from AppleMusicKit
         let client = try await AppleMusicClient(storefront: input.storefront ?? "fr")
 

@@ -23,11 +23,11 @@ public struct AmplifierInput: Codable {
     description: "Power on the amplifier",
     schema: AmplifierInput.self
 )
-public struct PowerOnTool: MCPToolProtocol {
+public struct PowerOnTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -44,11 +44,11 @@ public struct PowerOnTool: MCPToolProtocol {
     description: "Power off the amplifier",
     schema: AmplifierInput.self
 )
-public struct PowerOffTool: MCPToolProtocol {
+public struct PowerOffTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -65,11 +65,11 @@ public struct PowerOffTool: MCPToolProtocol {
     description: "Switch amplifier input to Sonos",
     schema: AmplifierInput.self
 )
-public struct SwitchToSonosTool: MCPToolProtocol {
+public struct SwitchToSonosTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -86,11 +86,11 @@ public struct SwitchToSonosTool: MCPToolProtocol {
     description: "Switch amplifier input to Apple TV",
     schema: AmplifierInput.self
 )
-public struct SwitchToAppleTVTool: MCPToolProtocol {
+public struct SwitchToAppleTVTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -118,11 +118,11 @@ public struct SwitchToSourceInput: Codable {
     description: "Switch amplifier to a specific input source by index",
     schema: SwitchToSourceInput.self
 )
-public struct SwitchToSourceTool: MCPToolProtocol {
+public struct SwitchToSourceTool: ToolProtocol {
     public typealias Input = SwitchToSourceInput
     public typealias Output = String
 
-    public func handler(input: SwitchToSourceInput) async throws -> String {
+    public func handle(input: SwitchToSourceInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -139,11 +139,11 @@ public struct SwitchToSourceTool: MCPToolProtocol {
     description: "Get a list of available input sources",
     schema: AmplifierInput.self
 )
-public struct GetSourcesTool: MCPToolProtocol {
+public struct GetSourcesTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443
@@ -178,11 +178,11 @@ public struct GetSourcesTool: MCPToolProtocol {
     description: "Get the current status of the amplifier",
     schema: AmplifierInput.self
 )
-public struct GetStatusTool: MCPToolProtocol {
+public struct GetStatusTool: ToolProtocol {
     public typealias Input = AmplifierInput
     public typealias Output = String
 
-    public func handler(input: AmplifierInput) async throws -> String {
+    public func handle(input: AmplifierInput) async throws -> String {
         let config = AmplifierConfig(
             host: input.host ?? "192.168.1.37",
             port: input.port ?? 10443

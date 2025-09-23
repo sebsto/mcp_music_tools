@@ -23,11 +23,11 @@ public struct PlayStorefrontPlaylistInput: Codable {
     description: "Play an Apple Music storefront playlist on a Sonos speaker",
     schema: PlayStorefrontPlaylistInput.self
 )
-public struct PlayStorefrontPlaylistTool: MCPToolProtocol {
+public struct PlayStorefrontPlaylistTool: ToolProtocol {
     public typealias Input = PlayStorefrontPlaylistInput
     public typealias Output = String
 
-    public func handler(input: PlayStorefrontPlaylistInput) async throws -> String {
+    public func handle(input: PlayStorefrontPlaylistInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,

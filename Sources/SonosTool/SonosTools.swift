@@ -25,11 +25,11 @@ public struct RoomInput: Codable {
     description: "Play music on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct PlayTool: MCPToolProtocol {
+public struct PlayTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -46,11 +46,11 @@ public struct PlayTool: MCPToolProtocol {
     description: "Pause music on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct PauseTool: MCPToolProtocol {
+public struct PauseTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -67,11 +67,11 @@ public struct PauseTool: MCPToolProtocol {
     description: "Stop music on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct StopTool: MCPToolProtocol {
+public struct StopTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -88,11 +88,11 @@ public struct StopTool: MCPToolProtocol {
     description: "Skip to next track on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct NextTool: MCPToolProtocol {
+public struct NextTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -109,11 +109,11 @@ public struct NextTool: MCPToolProtocol {
     description: "Skip to previous track on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct PreviousTool: MCPToolProtocol {
+public struct PreviousTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -143,11 +143,11 @@ public struct SetVolumeInput: Codable {
     description: "Set volume on a Sonos speaker",
     schema: SetVolumeInput.self
 )
-public struct SetVolumeTool: MCPToolProtocol {
+public struct SetVolumeTool: ToolProtocol {
     public typealias Input = SetVolumeInput
     public typealias Output = String
 
-    public func handler(input: SetVolumeInput) async throws -> String {
+    public func handle(input: SetVolumeInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -164,11 +164,11 @@ public struct SetVolumeTool: MCPToolProtocol {
     description: "Clear the queue on a Sonos speaker",
     schema: RoomInput.self
 )
-public struct ClearQueueTool: MCPToolProtocol {
+public struct ClearQueueTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -202,11 +202,11 @@ public struct GetQueueInput: Codable {
     description: "Get the current queue from a Sonos speaker",
     schema: GetQueueInput.self
 )
-public struct GetQueueTool: MCPToolProtocol {
+public struct GetQueueTool: ToolProtocol {
     public typealias Input = GetQueueInput
     public typealias Output = String
 
-    public func handler(input: GetQueueInput) async throws -> String {
+    public func handle(input: GetQueueInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -250,11 +250,11 @@ public struct PlayAppleMusicInput: Codable {
     description: "Play Apple Music content on a Sonos speaker. This must be used to play apple music songs, titles or playslist now, next, or when asked to add items in the queue.",
     schema: PlayAppleMusicInput.self
 )
-public struct PlayAppleMusicTool: MCPToolProtocol {
+public struct PlayAppleMusicTool: ToolProtocol {
     public typealias Input = PlayAppleMusicInput
     public typealias Output = String
 
-    public func handler(input: PlayAppleMusicInput) async throws -> String {
+    public func handle(input: PlayAppleMusicInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -305,11 +305,11 @@ public struct PlayAppleMusicTool: MCPToolProtocol {
     description: "Get the current state of a Sonos speaker",
     schema: RoomInput.self
 )
-public struct GetStateTool: MCPToolProtocol {
+public struct GetStateTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -345,11 +345,11 @@ public struct PlayAppleMusicPlaylistInput: Codable {
     description: "Play an Apple Music playlist on a Sonos speaker",
     schema: PlayAppleMusicPlaylistInput.self
 )
-public struct PlayAppleMusicPlaylistTool: MCPToolProtocol {
+public struct PlayAppleMusicPlaylistTool: ToolProtocol {
     public typealias Input = PlayAppleMusicPlaylistInput
     public typealias Output = String
 
-    public func handler(input: PlayAppleMusicPlaylistInput) async throws -> String {
+    public func handle(input: PlayAppleMusicPlaylistInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -393,11 +393,11 @@ public struct GetRoomsInput: Codable {
     description: "Get a list of available Sonos rooms/zones",
     schema: GetRoomsInput.self
 )
-public struct GetRoomsTool: MCPToolProtocol {
+public struct GetRoomsTool: ToolProtocol {
     public typealias Input = GetRoomsInput
     public typealias Output = String
 
-    public func handler(input: GetRoomsInput) async throws -> String {
+    public func handle(input: GetRoomsInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005
@@ -431,11 +431,11 @@ public struct SetShuffleInput: Codable {
     description: "Enable or disable shuffle mode on a Sonos speaker",
     schema: SetShuffleInput.self
 )
-public struct SetShuffleTool: MCPToolProtocol {
+public struct SetShuffleTool: ToolProtocol {
     public typealias Input = SetShuffleInput
     public typealias Output = String
 
-    public func handler(input: SetShuffleInput) async throws -> String {
+    public func handle(input: SetShuffleInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -466,11 +466,11 @@ public struct JoinRoomInput: Codable {
     description: "Join a Sonos speaker to a group",
     schema: JoinRoomInput.self
 )
-public struct JoinRoomTool: MCPToolProtocol {
+public struct JoinRoomTool: ToolProtocol {
     public typealias Input = JoinRoomInput
     public typealias Output = String
 
-    public func handler(input: JoinRoomInput) async throws -> String {
+    public func handle(input: JoinRoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,
@@ -487,11 +487,11 @@ public struct JoinRoomTool: MCPToolProtocol {
     description: "Remove a Sonos speaker from its group",
     schema: RoomInput.self
 )
-public struct LeaveGroupTool: MCPToolProtocol {
+public struct LeaveGroupTool: ToolProtocol {
     public typealias Input = RoomInput
     public typealias Output = String
 
-    public func handler(input: RoomInput) async throws -> String {
+    public func handle(input: RoomInput) async throws -> String {
         let client = SonosClient(
             host: input.host ?? "localhost",
             port: input.port ?? 5005,

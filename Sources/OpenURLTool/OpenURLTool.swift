@@ -15,10 +15,10 @@ struct OpenURLInput: Decodable {
     description: "Opens a URL in the default browser",
     schema: OpenURLInput.self
 )
-struct OpenURLTool: MCPToolProtocol {
+struct OpenURLTool: ToolProtocol {
     typealias Input = OpenURLInput
     typealias Output = String
-    func handler(input: OpenURLInput) async throws -> String {
+    func handle(input: OpenURLInput) async throws -> String {
         do {
             try URLOpener.open(input.url)
             return "Successfully opened URL: \(input.url)"
