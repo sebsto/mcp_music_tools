@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "music_agent",
+    name: "MusicAgent",
     platforms: [
         .macOS(.v15)
     ],
@@ -71,7 +71,7 @@ let package = Package(
         // .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
         // .package(url: "https://github.com/build-on-aws/swift-bedrock-library.git", branch: "main"),
         .package(path: "../swift-bedrock-library"),
-        .package(path: "../mcpserverkit"),
+        .package(path: "../AgentKit"),
     ],
     targets: [
         .target(
@@ -124,28 +124,28 @@ let package = Package(
             name: "AppleMusicTool",
             dependencies: [
                 "AppleMusicKit",
-                .product(name: "MCPServerKit", package: "mcpserverkit"),
+                .product(name: "MCPServerKit", package: "AgentKit"),
             ]
         ),
         .executableTarget(
             name: "SonosTool",
             dependencies: [
                 "SonosKit",
-                .product(name: "MCPServerKit", package: "mcpserverkit"),
+                .product(name: "MCPServerKit", package: "AgentKit"),
             ]
         ),
         .executableTarget(
             name: "AmplifierTool",
             dependencies: [
                 "AmplifierKit",
-                .product(name: "MCPServerKit", package: "mcpserverkit"),
+                .product(name: "MCPServerKit", package: "AgentKit"),
             ]
         ),
         .executableTarget(
             name: "OpenURLTool",
             dependencies: [
                 "OpenURLKit",
-                .product(name: "MCPServerKit", package: "mcpserverkit"),
+                .product(name: "MCPServerKit", package: "AgentKit"),
             ]
         ),
         .executableTarget(
@@ -154,14 +154,14 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "BedrockService", package: "swift-bedrock-library"),
-                .product(name: "MCPClientKit", package: "mcpserverkit"),
+                .product(name: "MCPClientKit", package: "AgentKit"),
                 "AppleMusicKit", "OpenURLKit",
             ]
         ),
         .executableTarget(
             name: "MusicPlayerTool",
             dependencies: [
-                .product(name: "MCPServerKit", package: "mcpserverkit"),
+                .product(name: "MCPServerKit", package: "AgentKit")
             ]
         ),
         .testTarget(
